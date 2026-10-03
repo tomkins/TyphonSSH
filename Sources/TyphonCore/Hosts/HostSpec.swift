@@ -56,7 +56,8 @@ public struct HostSpec: Hashable, Codable, Sendable {
     if let port {
       arguments += ["-p", String(port)]
     }
-    arguments.append(hostname)
+    // End option parsing so the destination and command are never read as options.
+    arguments += ["--", hostname]
     if let command = command ?? defaultCommand, !command.isEmpty {
       arguments.append(command)
     }
@@ -71,14 +72,17 @@ public struct HostSpec: Hashable, Codable, Sendable {
     if let at = remainder.firstIndex(of: "@") {
       user = String(remainder[..<at])
       remainder = remainder[remainder.index(after: at)...]
-      guard !(user?.isEmpty ?? true) else { return nil }
+      guard let user, !user.isEmpty, !user.hasPrefix("-") else { return nil }
     }
     var port: String?
     if let colon = remainder.firstIndex(of: ":") {
       port = String(remainder[remainder.index(after: colon)...])
       remainder = remainder[..<colon]
     }
-    guard !remainder.isEmpty, !remainder.contains("@") else { return nil }
+    // A leading "-" would let a host smuggle options (such as -oProxyCommand) into ssh.
+    guard !remainder.isEmpty, !remainder.hasPrefix("-"), !remainder.contains("@") else {
+      return nil
+    }
     return (user, String(remainder), port?.isEmpty == true ? nil : port)
   }
 }

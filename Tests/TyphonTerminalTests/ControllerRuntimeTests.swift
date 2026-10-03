@@ -123,9 +123,9 @@ final class RecordingNotifier: Notifier {
     #expect(
       terminal.calls == [
         .setColors(scheme, terminal.controllerWindow),
-        .open(" exec /bin/tyssh _session --socket /tmp/t.sock --id 1 --title web1 -- ssh web1"),
+        .open(" exec /bin/tyssh _session --socket /tmp/t.sock --id 1 --title web1 -- ssh -- web1"),
         .setProfile("Quiet", 101),
-        .open(" exec /bin/tyssh _session --socket /tmp/t.sock --id 2 --title web2 -- ssh web2"),
+        .open(" exec /bin/tyssh _session --socket /tmp/t.sock --id 2 --title web2 -- ssh -- web2"),
         .setProfile("Quiet", 102),
         .arrange([
           WindowPlacement(window: 101, frame: Rect(x: 0, y: 25, width: 600, height: 700)),

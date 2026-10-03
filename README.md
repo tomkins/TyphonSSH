@@ -114,6 +114,7 @@ Settings are read from `~/.config/tyssh/config.json` (or `$XDG_CONFIG_HOME/tyssh
 ```
 
 - **Colours** are written either as `#RRGGBB` or as Terminal's 16-bit `{r,g,b}`. A colour pair you set replaces the default pair entirely, so leaving a side out means that side isn't recoloured.
+- **`ssh`** can name a wrapper such as `mosh`. It runs as `<ssh> <sshArguments> [-l user] [-p port] -- host [command]`, so a wrapper must accept `--` before the host. Hosts starting with `-` are rejected, so a hosts file can't slip options into ssh.
 - **Profiles** are Terminal "settings sets". A session profile with a visual bell avoids a chorus of beeps.
 - **`interleave`** takes every Nth host, so clusters sit side by side. For example, with `"interleave": 3`, `--columns 2` and two three-host clusters, each row shows one host from each cluster.
 

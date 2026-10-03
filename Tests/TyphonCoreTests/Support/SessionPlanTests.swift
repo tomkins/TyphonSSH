@@ -39,7 +39,7 @@ import TyphonCore
     #expect(
       command
         == " exec '/opt/tyssh dir/tyssh' _session --socket /tmp/s.sock --id 3 --title web1:2222 -- "
-        + "/usr/bin/ssh -o 'ServerAliveInterval 30' -l deploy -p 2222 web1 'tail -f /var/log/system.log'"
+        + "/usr/bin/ssh -o 'ServerAliveInterval 30' -l deploy -p 2222 -- web1 'tail -f /var/log/system.log'"
     )
   }
 

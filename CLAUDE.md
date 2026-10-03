@@ -14,7 +14,11 @@ swift test --filter TyphonCoreTests           # one test target
 swift test --filter ControllerLifecycleTests  # one suite
 swift test --filter "ControllerLifecycleTests/openingHostsOpensWindowsThenTiles"  # one test
 swift run tyssh --debug web1 web2             # run; --debug keeps each window's shell open after its command ends
+swift format -i -r Sources Tests              # format
+swift format lint -r Sources Tests            # lint; must print nothing
 ```
+
+All Swift code must be formatted with `swift format` (the default configuration; there is no `.swift-format` file). Before every commit, run `swift format -i -r Sources Tests`, then `swift format lint -r Sources Tests`, and fix anything lint still reports by hand: it can't rewrite every rule, such as `ReplaceForEachWithForLoop` or long lines it has no place to break. Every commit must pass lint with no warnings.
 
 Tests use Swift Testing (`import Testing`, `@Suite`, `@Test`, `#expect`), not XCTest. Running `tyssh` for real drives Terminal.app and needs the macOS Automation and Accessibility permissions.
 

@@ -2,9 +2,9 @@ import Foundation
 
 /// Messages exchanged over the controller's Unix socket.
 public enum ControlMessage: Hashable, Codable, Sendable {
-  /// Sent by a session as soon as it connects.
-  /// The controller finds the session's Terminal window by its `tty`.
-  case hello(id: SessionID, tty: String)
+  /// Sent by a session as soon as it connects, with the token its window was
+  /// started with. The controller finds the session's Terminal window by its `tty`.
+  case hello(id: SessionID, tty: String, token: String)
   /// Sent by a session just before it exits, with ssh's exit code.
   case exited(code: Int32)
   /// Sent by the controller: bytes to feed into the session as if typed.

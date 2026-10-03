@@ -26,9 +26,9 @@ Tests use Swift Testing (`import Testing`, `@Suite`, `@Test`, `#expect`), not XC
 
 1. **Launcher** (`tyssh <hosts>`, `Tyssh.swift` → `Launcher.swift`): loads configuration, resolves host patterns, writes a `SessionPlan` as JSON, and opens the controller window.
 2. **Controller** (`tyssh _controller`, `ControllerCommand.swift` → `ControllerRuntime`): puts its tty in raw mode, listens on a Unix socket, opens one Terminal window per session, and broadcasts keystrokes.
-3. **Session** (`tyssh _session <id>`, `SessionCommand.swift` → `SessionRuntime`): runs ssh on a pseudo-terminal it owns, connects to the controller's socket, sends `hello(id, tty)`, and writes the `input` bytes it receives straight into the pty. It sends `exited(code)` before quitting.
+3. **Session** (`tyssh _session <id>`, `SessionCommand.swift` → `SessionRuntime`): runs ssh on a pseudo-terminal it owns, connects to the controller's socket, sends `hello(id, tty, token)`, and writes the `input` bytes it receives straight into the pty. It sends `exited(code)` before quitting.
 
-The controller finds each session's Terminal window by matching the tty from `hello` (`TerminalApp.windowID(forTTY:)`). Socket messages are `ControlMessage`s framed as a 4-byte big-endian length followed by JSON (`TyphonCore/Messaging`). `WindowCommands` in `SessionPlan.swift` builds the shell commands typed into new windows.
+The controller starts each session window with a random `--token` and accepts one connection per session presenting it (`SessionToken`), then finds the session's Terminal window by matching the tty from `hello` (`TerminalApp.windowID(forTTY:)`). Socket messages are `ControlMessage`s framed as a 4-byte big-endian length followed by JSON (`TyphonCore/Messaging`). `WindowCommands` in `SessionPlan.swift` builds the shell commands typed into new windows.
 
 ### Pure core, effectful shell
 

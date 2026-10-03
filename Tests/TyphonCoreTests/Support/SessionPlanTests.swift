@@ -33,12 +33,13 @@ import TyphonCore
     configuration.remoteCommand = "tail -f /var/log/system.log"
 
     let command = commands.session(
-      SessionID(3), host: HostSpec(hostname: "web1", port: 2222), socketPath: "/tmp/s.sock",
+      SessionID(3), token: "c0ffee", host: HostSpec(hostname: "web1", port: 2222),
+      socketPath: "/tmp/s.sock",
       configuration: configuration
     )
     #expect(
       command
-        == " exec '/opt/tyssh dir/tyssh' _session --socket /tmp/s.sock --id 3 --title web1:2222 -- "
+        == " exec '/opt/tyssh dir/tyssh' _session --socket /tmp/s.sock --id 3 --token c0ffee --title web1:2222 -- "
         + "/usr/bin/ssh -o 'ServerAliveInterval 30' -l deploy -p 2222 -- web1 'tail -f /var/log/system.log'"
     )
   }

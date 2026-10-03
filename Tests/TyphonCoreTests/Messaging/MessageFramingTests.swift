@@ -4,7 +4,7 @@ import TyphonCore
 
 @Suite struct MessageFramingTests {
   let messages: [ControlMessage] = [
-    .hello(id: SessionID(3), tty: "/dev/ttys004"),
+    .hello(id: SessionID(3), tty: "/dev/ttys004", token: "secret"),
     .input(Data("ls -l\r".utf8)),
     .input(Data([0x1B, 0x4F, 0x41, 0x00, 0xFF])),
     .exited(code: 255),

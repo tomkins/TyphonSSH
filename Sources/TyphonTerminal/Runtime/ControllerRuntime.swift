@@ -15,6 +15,8 @@ public final class ControllerRuntime {
     public var homeDirectory: URL
     /// The controller's own tty, used to find its window.
     public var tty: String?
+    /// Makes the secret each session presents when it connects.
+    public var makeToken: () -> String
 
     public init(
       terminal: any TerminalApp,
@@ -23,7 +25,8 @@ public final class ControllerRuntime {
       output: TerminalOutput,
       commands: WindowCommands,
       homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
-      tty: String? = ttyName(.standardInput)
+      tty: String? = ttyName(.standardInput),
+      makeToken: @escaping () -> String = SessionToken.random
     ) {
       self.terminal = terminal
       self.screens = screens
@@ -32,6 +35,7 @@ public final class ControllerRuntime {
       self.commands = commands
       self.homeDirectory = homeDirectory
       self.tty = tty
+      self.makeToken = makeToken
     }
   }
 
@@ -42,6 +46,8 @@ public final class ControllerRuntime {
   private var terminal: any TerminalApp { environment.terminal }
 
   private var connections: [SessionID: MessageConnection] = [:]
+  /// The token each session window was started with, until it connects.
+  private var tokens: [SessionID: String] = [:]
   private var controllerWindow: TerminalWindowID?
   private var controllerColors = ColorPair()
   private var originalColors: [SessionID: ColorPair] = [:]
@@ -137,9 +143,11 @@ public final class ControllerRuntime {
       var exitCode: Int32?
       for await message in connection.messages() {
         switch message {
-        case .hello(let id, let tty) where session == nil:
+        case .hello(let id, let tty, let token) where session == nil:
+          guard sessionConnected(id, tty: tty, token: token, connection: connection) else {
+            break
+          }
           session = id
-          sessionConnected(id, tty: tty, connection: connection)
         case .exited(let code):
           exitCode = code
         default:
@@ -152,15 +160,25 @@ public final class ControllerRuntime {
     }
   }
 
-  public func sessionConnected(_ id: SessionID, tty: String, connection: MessageConnection) {
-    guard let session = state.roster[id], phase == .running else {
+  /// Accepts a session's connection if it presents the token its window was
+  /// started with. Each token works once, so a connection can't take over a
+  /// session that's already connected.
+  @discardableResult
+  public func sessionConnected(
+    _ id: SessionID, tty: String, token: String, connection: MessageConnection
+  ) -> Bool {
+    guard let session = state.roster[id], phase == .running, let expected = tokens[id],
+      SessionToken.matches(token, expected)
+    else {
       connection.close()
-      return
+      return false
     }
+    tokens[id] = nil
     connections[id] = connection
     if session.windowID == nil, let window = try? terminal.windowID(forTTY: tty) {
       state.attach(windowID: window, to: id)
     }
+    return true
   }
 
   /// Forgets a session whose connection ended.
@@ -169,6 +187,7 @@ public final class ControllerRuntime {
   /// left open so any error can be read.
   public func sessionDisconnected(_ id: SessionID, exitCode: Int32? = nil) {
     connections[id] = nil
+    tokens[id] = nil
     guard phase == .running else {
       if connections.isEmpty { finishQuitting() }
       return
@@ -252,8 +271,10 @@ public final class ControllerRuntime {
   }
 
   private func openWindow(for id: SessionID, host: HostSpec) throws {
+    let token = environment.makeToken()
+    tokens[id] = token
     let command = environment.commands.session(
-      id, host: host, socketPath: plan.socketPath, configuration: configuration)
+      id, token: token, host: host, socketPath: plan.socketPath, configuration: configuration)
     let window: TerminalWindowID
     do {
       window = try terminal.openWindow(running: command)

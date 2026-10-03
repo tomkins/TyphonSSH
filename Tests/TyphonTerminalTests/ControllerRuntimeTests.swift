@@ -103,6 +103,7 @@ final class RecordingNotifier: Notifier {
     let plan = SessionPlan(
       configuration: configuration, hosts: hosts.map { HostSpec(hostname: $0) },
       socketPath: "/tmp/t.sock")
+    var tokens = 0
     let environment = ControllerRuntime.Environment(
       terminal: terminal,
       screens: FixedScreens(),
@@ -110,7 +111,11 @@ final class RecordingNotifier: Notifier {
       output: TerminalOutput(FileDescriptor(rawValue: open("/dev/null", O_WRONLY))),
       commands: WindowCommands(executable: "/bin/tyssh"),
       homeDirectory: home,
-      tty: "/dev/ttys000"
+      tty: "/dev/ttys000",
+      makeToken: {
+        tokens += 1
+        return "token\(tokens)"
+      }
     )
     return ControllerRuntime(plan: plan, environment: environment)
   }
@@ -123,9 +128,13 @@ final class RecordingNotifier: Notifier {
     #expect(
       terminal.calls == [
         .setColors(scheme, terminal.controllerWindow),
-        .open(" exec /bin/tyssh _session --socket /tmp/t.sock --id 1 --title web1 -- ssh -- web1"),
+        .open(
+          " exec /bin/tyssh _session --socket /tmp/t.sock --id 1 --token token1 --title web1 -- ssh -- web1"
+        ),
         .setProfile("Quiet", 101),
-        .open(" exec /bin/tyssh _session --socket /tmp/t.sock --id 2 --title web2 -- ssh -- web2"),
+        .open(
+          " exec /bin/tyssh _session --socket /tmp/t.sock --id 2 --token token2 --title web2 -- ssh -- web2"
+        ),
         .setProfile("Quiet", 102),
         .arrange([
           WindowPlacement(window: 101, frame: Rect(x: 0, y: 25, width: 600, height: 700)),
@@ -235,6 +244,23 @@ final class RecordingNotifier: Notifier {
     runtime.start()
     #expect(runtime.state.roster.isEmpty)
     #expect(runtime.state.prompt.last?.contains("Privacy & Security") == true)
+  }
+
+  @Test func acceptsEachSessionOnceWithItsOwnToken() {
+    let runtime = makeRuntime()
+    runtime.start()
+    func connect(_ id: Int, token: String) -> Bool {
+      let connection = MessageConnection(
+        descriptor: FileDescriptor(rawValue: open("/dev/null", O_RDWR)))
+      return runtime.sessionConnected(
+        SessionID(id), tty: "/dev/ttys001", token: token, connection: connection)
+    }
+
+    #expect(!connect(1, token: "wrong"))
+    #expect(!connect(1, token: "token2"))
+    #expect(connect(1, token: "token1"))
+    #expect(!connect(1, token: "token1"))
+    #expect(!connect(3, token: "token1"))
   }
 
   @Test func closesWindowsOfSessionsThatExitCleanly() async throws {

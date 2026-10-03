@@ -15,6 +15,9 @@ struct SessionCommand: AsyncParsableCommand {
   @Option(help: "This session's identifier.")
   var id: Int
 
+  @Option(help: "The secret proving this session to the controller.")
+  var token: String
+
   @Option(help: "Window title.")
   var title: String
 
@@ -27,7 +30,7 @@ struct SessionCommand: AsyncParsableCommand {
 
   func run() async throws {
     let runtime = SessionRuntime(
-      id: SessionID(id), title: title, socketPath: socket, command: command)
+      id: SessionID(id), title: title, socketPath: socket, token: token, command: command)
     throw ExitCode(try await runtime.run())
   }
 }

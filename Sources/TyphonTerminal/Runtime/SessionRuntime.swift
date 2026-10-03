@@ -14,13 +14,16 @@ public struct SessionRuntime: Sendable {
   public var id: SessionID
   public var title: String
   public var socketPath: String
+  /// Proves to the controller that this is the session it started.
+  public var token: String
   /// The ssh invocation, starting with the executable.
   public var command: [String]
 
-  public init(id: SessionID, title: String, socketPath: String, command: [String]) {
+  public init(id: SessionID, title: String, socketPath: String, token: String, command: [String]) {
     self.id = id
     self.title = title
     self.socketPath = socketPath
+    self.token = token
     self.command = command
   }
 
@@ -31,7 +34,7 @@ public struct SessionRuntime: Sendable {
     output.setTitle("tyssh - \(title)")
 
     let controller = try MessageConnection.connect(to: socketPath)
-    controller.send(.hello(id: id, tty: ttyName(.standardInput) ?? ""))
+    controller.send(.hello(id: id, tty: ttyName(.standardInput) ?? "", token: token))
 
     let rawMode = FileDescriptor.standardInput.isTerminal ? try RawMode() : nil
 

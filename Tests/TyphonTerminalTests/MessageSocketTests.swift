@@ -18,12 +18,13 @@ struct MessageSocketTests {
     #expect(attributes[.posixPermissions] as? Int == 0o600)
 
     let session = try MessageConnection.connect(to: path)
-    session.send(.hello(id: SessionID(7), tty: "/dev/ttys009"))
+    session.send(.hello(id: SessionID(7), tty: "/dev/ttys009", token: "secret"))
 
     var connections = listener.connections().makeAsyncIterator()
     let controller = try #require(await connections.next())
     var fromSession = controller.messages().makeAsyncIterator()
-    #expect(await fromSession.next() == .hello(id: SessionID(7), tty: "/dev/ttys009"))
+    #expect(
+      await fromSession.next() == .hello(id: SessionID(7), tty: "/dev/ttys009", token: "secret"))
 
     controller.send(.input(Data("uptime\r".utf8)))
     controller.close()
@@ -36,5 +37,14 @@ struct MessageSocketTests {
     #expect(throws: Errno.fileNameTooLong) {
       try MessageListener(path: "/tmp/" + String(repeating: "x", count: 200))
     }
+  }
+}
+
+@Suite struct SessionTokenTests {
+  @Test func randomTokensAre128BitHex() {
+    let token = SessionToken.random()
+    #expect(token.count == 32)
+    #expect(token.allSatisfy { $0.isHexDigit })
+    #expect(token != SessionToken.random())
   }
 }

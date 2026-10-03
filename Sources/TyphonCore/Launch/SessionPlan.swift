@@ -45,7 +45,8 @@ public struct WindowCommands: Hashable, Sendable {
   }
 
   public func session(
-    _ id: SessionID, host: HostSpec, socketPath: String, configuration: Configuration
+    _ id: SessionID, token: String, host: HostSpec, socketPath: String,
+    configuration: Configuration
   ) -> String {
     let ssh = host.sshArguments(
       ssh: configuration.ssh,
@@ -55,8 +56,8 @@ public struct WindowCommands: Hashable, Sendable {
     )
     return shellCommand(
       [
-        executable, "_session", "--socket", socketPath, "--id", id.description, "--title",
-        host.connectionString, "--",
+        executable, "_session", "--socket", socketPath, "--id", id.description, "--token",
+        token, "--title", host.connectionString, "--",
       ]
         + ssh
     )

@@ -223,6 +223,9 @@ final class RecordingNotifier: Notifier {
     #expect(
       try String(contentsOf: home.appending(path: "scroll.web2.txt"), encoding: .utf8)
         == "history of 102\n")
+    let attributes = try FileManager.default.attributesOfItem(
+      atPath: home.appending(path: "scroll.web2.txt").path)
+    #expect(attributes[.posixPermissions] as? Int == 0o600)
     #expect(runtime.state.prompt.last == "Saved 2 scrollback files, e.g. ~/scroll.web1.txt")
   }
 

@@ -305,13 +305,25 @@ public final class ControllerRuntime {
         dump.path.hasPrefix("/")
         ? URL(filePath: dump.path)
         : environment.homeDirectory.appending(path: dump.path)
-      try terminal.history(of: window).write(to: url, atomically: true, encoding: .utf8)
+      try writePrivately(Data(terminal.history(of: window).utf8), to: url)
     }
     if let first = dumps.first {
       state.show(
         status:
           "Saved \(dumps.count) scrollback file\(dumps.count == 1 ? "" : "s"), e.g. ~/\(first.path)"
       )
+    }
+  }
+
+  /// Writes `data` readable only by the current user, as history often holds secrets.
+  private func writePrivately(_ data: Data, to url: URL) throws {
+    let file = try FileDescriptor.open(
+      FilePath(url.path), .writeOnly, options: [.create, .truncate, .noFollow],
+      permissions: .ownerReadWrite)
+    try file.closeAfter {
+      // An existing file keeps its mode through O_CREAT, so tighten it too.
+      guard fchmod(file.rawValue, 0o600) == 0 else { throw Errno(rawValue: errno) }
+      _ = try file.writeAll(data)
     }
   }
 

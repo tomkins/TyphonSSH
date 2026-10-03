@@ -79,3 +79,31 @@ import TyphonCore
     #expect(rect.resizedBy(dWidth: -200, dHeight: 10) == Rect(x: 10, y: 20, width: 1, height: 60))
   }
 }
+
+@Suite struct TilingAreaTests {
+  let screens = [
+    Rect(x: 0, y: 25, width: 1440, height: 875),
+    Rect(x: 1440, y: 0, width: 1920, height: 1055),
+  ]
+
+  @Test func usesTheSelectedScreen() throws {
+    #expect(try TilingArea.resolve(.single(2), screens: screens) == screens[1])
+    #expect(
+      try TilingArea.resolve(.span(1, 2), screens: screens)
+        == Rect(x: 0, y: 25, width: 3360, height: 875))
+  }
+
+  @Test func rejectsMissingScreens() {
+    #expect(throws: TilingAreaError.noSuchScreen(3, available: 2)) {
+      try TilingArea.resolve(.span(1, 3), screens: screens)
+    }
+  }
+
+  @Test func prefersConfiguredBounds() throws {
+    var configuration = Configuration()
+    configuration.screen = .single(2)
+    configuration.screenBounds = Rect(x: 10, y: 10, width: 100, height: 100)
+    #expect(
+      try TilingArea.resolve(for: configuration, screens: screens) == configuration.screenBounds)
+  }
+}

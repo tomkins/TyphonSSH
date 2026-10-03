@@ -22,6 +22,8 @@ The first run triggers two macOS permission prompts:
 - **Automation:** Terminal must be allowed to control Terminal, and System Events for keyboard shortcuts. If you missed the prompts, enable this in *System Settings › Privacy & Security › Automation*.
 - **Accessibility:** Terminal needs this for the actions that send keyboard shortcuts: split panes and font size.
 
+macOS grants both permissions to Terminal, not to tyssh, so every program you run in Terminal gets them too. Accessibility is only needed for split panes and font size. If you don't use them, you can leave it off.
+
 ## Choosing hosts
 
 Each argument can be a host, a host pattern, or a cluster name from your configuration.

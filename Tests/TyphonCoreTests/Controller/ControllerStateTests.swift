@@ -152,10 +152,6 @@ let esc = "\u{1B}"
       harness.type("p") == [
         .shortcut(.splitPane, sessions: harness.ids, includingController: false), .retile,
       ])
-    #expect(
-      harness.type("\(ctrlA)k") == [
-        .shortcut(.clearScrollback, sessions: harness.ids, includingController: false)
-      ])
   }
 
   @Test func hidesMinimisesAndQuits() {

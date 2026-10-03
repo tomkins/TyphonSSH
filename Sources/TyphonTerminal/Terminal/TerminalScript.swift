@@ -134,7 +134,6 @@ struct Keystroke: Hashable {
     case .closeSplitPane: self.init(key: "d", modifiers: ["command down", "shift down"])
     case .biggerFont: self.init(key: "+", modifiers: ["command down"])
     case .smallerFont: self.init(key: "-", modifiers: ["command down"])
-    case .clearScrollback: self.init(key: "k", modifiers: ["command down"])
     }
   }
 

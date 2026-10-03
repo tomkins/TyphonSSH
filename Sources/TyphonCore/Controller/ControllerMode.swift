@@ -27,7 +27,7 @@ extension ControllerMode {
         "Actions (Esc to exit, \(actionKey) to send \(actionKey) to input)",
         "[c]reate window, [r]etile, s[o]rt, [e]nable/disable input, e[n]able all, \(enableNext)"
           + "[t]oggle enabled, [m]inimise, [h]ide, [s]end text, change [b]ounds, "
-          + "[g/G]rid, [f/F]ont size, split [p/P]anes, clear s[k]rollback, "
+          + "[g/G]rid, [f/F]ont size, split [p/P]anes, "
           + "[d]ump scrollback, e[x]it",
       ]
     case .select:

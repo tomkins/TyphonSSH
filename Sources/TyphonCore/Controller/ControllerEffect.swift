@@ -46,7 +46,6 @@ public enum TerminalShortcut: Hashable, Sendable {
   case closeSplitPane
   case biggerFont
   case smallerFont
-  case clearScrollback
 }
 
 /// Steps in interactively choosing the tiling area by moving the controller window.

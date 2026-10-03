@@ -199,9 +199,6 @@ public struct ControllerState: Sendable {
       effects.append(.shortcut(.smallerFont, sessions: sessions, includingController: true))
     case .character("F"):
       effects.append(.shortcut(.biggerFont, sessions: sessions, includingController: true))
-    case .character("k"):
-      effects.append(.shortcut(.clearScrollback, sessions: sessions, includingController: false))
-      mode = .input
     case .character("d"):
       mode = .dumpScrollback(LineEditor())
     case .character("n"):

@@ -20,7 +20,7 @@ cp .build/release/tyssh /usr/local/bin/
 The first run triggers two macOS permission prompts:
 
 - **Automation:** Terminal must be allowed to control Terminal, and System Events for keyboard shortcuts. If you missed the prompts, enable this in *System Settings › Privacy & Security › Automation*.
-- **Accessibility:** Terminal needs this for the actions that send keyboard shortcuts: split panes, font size and clear scrollback.
+- **Accessibility:** Terminal needs this for the actions that send keyboard shortcuts: split panes and font size.
 
 ## Choosing hosts
 
@@ -66,7 +66,6 @@ What you type in the controller goes to every enabled session. Press **Ctrl-A** 
 | `b`          | Change the tiling area (see below) |
 | `p` / `P`    | Split / unsplit every window's pane |
 | `f` / `F`    | Smaller / bigger font everywhere |
-| `k`          | Clear every session's scrollback |
 | `d`          | Save every session's scrollback to `~/<base>.<host>.txt` |
 | `m` / `h`    | Minimise / hide the sessions |
 | `Ctrl-H`     | Hide the sessions and minimise the controller |

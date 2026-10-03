@@ -40,7 +40,7 @@ import TyphonCore
 
   @Test func enforcesSessionMaxAcrossArguments() {
     #expect(throws: HostListError.pattern(.tooManyHosts(limit: 8))) {
-      try resolver.resolve(arguments: ["a+5", "b+4"])
+      try resolver.resolve(arguments: ["a[1-5]", "b[1-4]"])
     }
   }
 

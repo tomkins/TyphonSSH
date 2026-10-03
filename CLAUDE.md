@@ -36,6 +36,6 @@ The controller finds each session's Terminal window by matching the tty from `he
 - **`TyphonTerminal`** carries out effects. `ControllerRuntime` maps each `ControllerEffect` onto `TerminalApp` calls, socket writes and file writes. `TerminalApp` is a `@MainActor` protocol; `AppleTerminal` implements it with AppleScript (`AppleScriptRunner`, `TerminalScript`), and keyboard-only actions (split pane, font size) go through System Events. `ControllerRuntimeTests` substitutes a `FakeTerminal` that records calls.
 - **`CTyphonSupport`** wraps the C calls Swift can't safely make (`forkpty`/`exec`, `ioctl`).
 
-Host arguments (ranges, lists, CIDR subnets, `host+N`, cluster names, hosts files) are expanded in `TyphonCore/Hosts` (`HostListResolver`, `HostPatternExpander`). Configuration is JSON from `~/.config/tyssh/config.json` (or `$XDG_CONFIG_HOME`), then any `--config` files, then CLI overrides, merged in `ConfigurationLoader`. The README documents every configuration key and controller keybinding, so update it when either changes.
+Host arguments (ranges, lists, CIDR subnets, cluster names, hosts files) are expanded in `TyphonCore/Hosts` (`HostListResolver`, `HostPatternExpander`). Configuration is JSON from `~/.config/tyssh/config.json` (or `$XDG_CONFIG_HOME`), then any `--config` files, then CLI overrides, merged in `ConfigurationLoader`. The README documents every configuration key and controller keybinding, so update it when either changes.
 
 All targets enable the `ApproachableConcurrency` upcoming feature (`Package.swift`).

@@ -28,8 +28,6 @@ struct StubResolver: HostAddressResolver {
       "username@db[1-2]:[22,23]",
       ["username@db1:22", "username@db1:23", "username@db2:22", "username@db2:23"]
     ),
-    ("localhost+3", ["localhost", "localhost", "localhost"]),
-    ("web[1-2]+2", ["web1", "web2", "web1", "web2"]),
   ])
   func expands(pattern: String, expected: [String]) throws {
     #expect(try expander.expand(pattern) == expected)
@@ -58,7 +56,6 @@ struct StubResolver: HostAddressResolver {
   @Test func refusesHugeExpansions() {
     #expect(throws: HostPatternError.tooManyHosts(limit: 64)) { try expander.expand("10.0.0.0/8") }
     #expect(throws: HostPatternError.tooManyHosts(limit: 64)) { try expander.expand("web[1-100]") }
-    #expect(throws: HostPatternError.tooManyHosts(limit: 64)) { try expander.expand("web+65") }
   }
 
   @Test func reportsBadInput() {

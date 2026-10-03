@@ -9,7 +9,6 @@
 /// | `db:[22,2222]`               | `db:22`, `db:2222`                          |
 /// | `192.168.0.0/30`             | `192.168.0.0` … `192.168.0.3`               |
 /// | `10.0.0.8/255.255.255.252`   | `10.0.0.8` … `10.0.0.11`                    |
-/// | `localhost+3`                | `localhost` three times                     |
 ///
 /// As in csshX, a subnet starts at the given address rather than the network
 /// address, so `192.168.0.14/28` yields only `.14` and `.15`.
@@ -31,14 +30,6 @@ public struct HostPatternExpander: Sendable {
   }
 
   private func expand(_ pattern: String, into results: inout [String]) throws(HostPatternError) {
-    if let (base, count) = repetition(in: pattern) {
-      let expanded = try expand(base)
-      for _ in 0..<count {
-        try append(expanded, to: &results)
-      }
-      return
-    }
-
     guard let (user, host, port) = HostSpec.split(pattern) else {
       // Not something we can decompose; leave validation to `HostSpec`.
       return try append([pattern], to: &results)
@@ -76,16 +67,6 @@ public struct HostPatternExpander: Sendable {
   private func append(_ hosts: [String], to results: inout [String]) throws(HostPatternError) {
     guard results.count + hosts.count <= limit else { throw .tooManyHosts(limit: limit) }
     results += hosts
-  }
-
-  /// Matches `base+N`.
-  private func repetition(in pattern: String) -> (String, Int)? {
-    guard let plus = pattern.lastIndex(of: "+") else { return nil }
-    let base = String(pattern[..<plus])
-    guard !base.isEmpty, let count = Int(pattern[pattern.index(after: plus)...]), count > 0 else {
-      return nil
-    }
-    return (base, count)
   }
 
   private func bracketed(_ text: String) -> String? {

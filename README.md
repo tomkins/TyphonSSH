@@ -34,7 +34,6 @@ Each argument can be a host, a host pattern, or a cluster name from your configu
 | `db:[22,2222]`             | Several ports on one host                    |
 | `10.0.0.0/28`              | A subnet, starting at the address given      |
 | `10.0.0.8/255.255.255.252` | A subnet written with a dotted netmask       |
-| `localhost+3`              | The same host three times                    |
 | `production`               | Every host in the `production` cluster       |
 
 `--hosts FILE` reads hosts from a file, or from standard input if FILE is `-`. Each line is a host, optionally followed by a command to run on it:

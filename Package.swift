@@ -1,25 +1,50 @@
 // swift-tools-version: 6.4
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
+let swiftSettings: [SwiftSetting] = [
+  .enableUpcomingFeature("ApproachableConcurrency")
+]
+
 let package = Package(
   name: "TyphonSSH",
+  platforms: [.macOS(.v14)],
+  products: [
+    .executable(name: "tyssh", targets: ["tyssh"])
+  ],
+  dependencies: [
+    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.8.0")
+  ],
   targets: [
-    // Targets are the basic building blocks of a package, defining a module or a test suite.
-    // Targets can depend on other targets in this package and products from dependencies.
+    // Pure, platform-agnostic logic: hosts, configuration, layout, the controller state machine.
+    .target(
+      name: "TyphonCore",
+      swiftSettings: swiftSettings
+    ),
+    // The macOS side: Terminal.app scripting, screens, pseudo-terminals and sockets.
+    .target(
+      name: "TyphonTerminal",
+      dependencies: ["TyphonCore"],
+      swiftSettings: swiftSettings
+    ),
     .executableTarget(
-      name: "TyphonSSH",
-      swiftSettings: [
-        .enableUpcomingFeature("ApproachableConcurrency")
+      name: "tyssh",
+      dependencies: [
+        "TyphonCore",
+        "TyphonTerminal",
+        .product(name: "ArgumentParser", package: "swift-argument-parser"),
       ],
+      swiftSettings: swiftSettings
     ),
     .testTarget(
-      name: "TyphonSSHTests",
-      dependencies: ["TyphonSSH"],
-      swiftSettings: [
-        .enableUpcomingFeature("ApproachableConcurrency")
-      ],
+      name: "TyphonCoreTests",
+      dependencies: ["TyphonCore"],
+      swiftSettings: swiftSettings
+    ),
+    .testTarget(
+      name: "TyphonTerminalTests",
+      dependencies: ["TyphonTerminal"],
+      swiftSettings: swiftSettings
     ),
   ]
 )

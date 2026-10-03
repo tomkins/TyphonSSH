@@ -81,6 +81,14 @@ final class RecordingRunner: AppleScriptRunner {
     #expect(script.hasSuffix("set frontmost of window id 9 to true"))
   }
 
+  @Test func notifiesThroughTerminal() {
+    TerminalNotifier(runner: runner).notify("Closed web1")
+    #expect(
+      runner.scripts == [
+        #"tell application "Terminal" to display notification "Closed web1" with title "tyssh""#
+      ])
+  }
+
   @Test(arguments: [
     TerminalScript.openWindow(running: "echo \"hi\" \\ there"),
     TerminalScript.windowID(forTTY: "/dev/ttys001"),
@@ -96,6 +104,7 @@ final class RecordingRunner: AppleScriptRunner {
     TerminalScript.close([1]),
     TerminalScript.history(of: 1),
     TerminalScript.send(Keystroke(for: .biggerFont), to: [1], thenFocus: 2),
+    TerminalNotifier.script(for: #"Closed "web1""#),
   ])
   func generatedScriptsCompile(source: String) throws {
     let script = try #require(NSAppleScript(source: source))

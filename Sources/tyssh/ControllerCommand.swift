@@ -30,7 +30,7 @@ struct ControllerCommand: AsyncParsableCommand {
     let environment = ControllerRuntime.Environment(
       terminal: AppleTerminal(),
       screens: SystemScreens(),
-      notifier: SilentNotifier(),
+      notifier: TerminalNotifier(),
       output: TerminalOutput(),
       commands: WindowCommands(
         executable: Bundle.main.executableURL?.resolvingSymlinksInPath().path

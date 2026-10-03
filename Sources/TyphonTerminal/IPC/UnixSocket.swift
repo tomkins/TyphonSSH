@@ -29,9 +29,15 @@ public final class MessageListener: Sendable {
         fileDescriptor: descriptor.rawValue, queue: .global())
       source.setEventHandler { [descriptor] in
         let client = accept(descriptor.rawValue, nil, nil)
-        if client >= 0 {
-          continuation.yield(MessageConnection(descriptor: FileDescriptor(rawValue: client)))
+        guard client >= 0 else { return }
+        // The socket's directory and mode already keep other users out; check anyway.
+        var user = uid_t()
+        var group = gid_t()
+        guard getpeereid(client, &user, &group) == 0, user == geteuid() else {
+          close(client)
+          return
         }
+        continuation.yield(MessageConnection(descriptor: FileDescriptor(rawValue: client)))
       }
       source.setCancelHandler { continuation.finish() }
       continuation.onTermination = { _ in source.cancel() }

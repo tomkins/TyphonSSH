@@ -8,7 +8,7 @@ let swiftSettings: [SwiftSetting] = [
 
 let package = Package(
   name: "TyphonSSH",
-  platforms: [.macOS(.v14)],
+  platforms: [.macOS(.v15)],
   products: [
     .executable(name: "tyssh", targets: ["tyssh"])
   ],

@@ -1,7 +1,7 @@
 import Testing
 import TyphonCore
 
-@Suite struct GridLayoutTests {
+@Suite struct GridTests {
   let area = Rect(x: 0, y: 25, width: 1200, height: 787)
 
   @Test(arguments: [
@@ -9,26 +9,27 @@ import TyphonCore
     (16, 4),
   ])
   func choosesColumnsAutomatically(count: Int, columns: Int) {
-    #expect(GridLayout.automaticColumns(for: count) == columns)
+    #expect(GridShape.automaticColumns(for: count) == columns)
   }
 
   @Test func fixedColumnsWinOverRows() {
-    let layout = GridLayout(count: 6, area: area, controllerHeight: 87, columns: 2, rows: 1)
+    let layout = GridShape(count: 6, columns: 2, rows: 1)
     #expect(layout.columns == 2)
     #expect(layout.rows == 3)
   }
 
   @Test func rowsDeriveColumns() {
-    #expect(GridLayout(count: 7, area: area, controllerHeight: 87, rows: 2).columns == 4)
+    #expect(GridShape(count: 7, rows: 2).columns == 4)
   }
 
   @Test func columnsAreClampedToTheWindowCount() {
-    #expect(GridLayout(count: 2, area: area, controllerHeight: 87, columns: 5).columns == 2)
-    #expect(GridLayout(count: 0, area: area, controllerHeight: 87).columns == 1)
+    #expect(GridShape(count: 2, columns: 5).columns == 2)
+    #expect(GridShape(count: 0).columns == 1)
   }
 
   @Test func tilesRowByRowAboveTheController() {
-    let layout = GridLayout(count: 5, area: area, controllerHeight: 87, columns: 3)
+    let layout = GridLayout(
+      shape: GridShape(count: 5, columns: 3), area: area, controllerHeight: 87)
     #expect(layout.frame(forWindowAt: 0) == Rect(x: 0, y: 25, width: 400, height: 350))
     #expect(layout.frame(forWindowAt: 4) == Rect(x: 400, y: 375, width: 400, height: 350))
     #expect(layout.controllerFrame == Rect(x: 0, y: 725, width: 1200, height: 87))
@@ -36,7 +37,7 @@ import TyphonCore
   }
 
   @Test func mapsBetweenIndicesAndPositions() {
-    let layout = GridLayout(count: 5, area: area, controllerHeight: 87, columns: 3)
+    let layout = GridShape(count: 5, columns: 3)
     #expect(layout.position(of: 4) == GridPosition(column: 1, row: 1))
     #expect(layout.index(at: GridPosition(column: 1, row: 1)) == 4)
     #expect(layout.index(at: GridPosition(column: 2, row: 1)) == nil)
@@ -46,7 +47,7 @@ import TyphonCore
   /// 0 1 2
   /// 3 4 ·
   @Test func movesWithWrappingAndSkipsEmptyCells() {
-    let layout = GridLayout(count: 5, area: area, controllerHeight: 87, columns: 3)
+    let layout = GridShape(count: 5, columns: 3)
     #expect(layout.index(movingFrom: 0, .right) == 1)
     #expect(layout.index(movingFrom: 0, .left) == 2)
     #expect(layout.index(movingFrom: 4, .right) == 3)

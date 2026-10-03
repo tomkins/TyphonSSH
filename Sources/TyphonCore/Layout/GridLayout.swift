@@ -13,45 +13,26 @@ public enum Direction: Hashable, Sendable {
   case up, down, left, right
 }
 
-/// How session windows are tiled within the tiling area, with the controller
-/// window running along the bottom.
+/// The arrangement of session windows into rows and columns.
 ///
 /// Windows fill the grid row by row, so only the last row can be partly empty.
-///
-/// ```
-/// ┌────────┬────────┬────────┐
-/// │ 0      │ 1      │ 2      │
-/// ├────────┼────────┼────────┤
-/// │ 3      │ 4      │        │
-/// ├────────┴────────┴────────┤
-/// │ controller               │
-/// └──────────────────────────┘
-/// ```
-public struct GridLayout: Hashable, Sendable {
+public struct GridShape: Hashable, Sendable {
   public let count: Int
   public let columns: Int
-  public let area: Rect
-  public let controllerHeight: Double
 
   /// - Parameters:
   ///   - count: Number of session windows.
-  ///   - area: The whole tiling area, including the controller.
   ///   - columns: A fixed column count; takes precedence over `rows`.
   ///   - rows: A fixed row count, from which the columns are derived.
-  public init(
-    count: Int, area: Rect, controllerHeight: Double, columns: Int? = nil, rows: Int? = nil
-  ) {
+  public init(count: Int, columns: Int? = nil, rows: Int? = nil) {
     self.count = count
-    self.area = area
-    self.controllerHeight = controllerHeight
-
     let chosen: Int
     if let columns, columns > 0 {
       chosen = columns
     } else if let rows, rows > 0 {
       chosen = (count + rows - 1) / rows
     } else {
-      chosen = GridLayout.automaticColumns(for: count)
+      chosen = GridShape.automaticColumns(for: count)
     }
     self.columns = min(max(chosen, 1), max(count, 1))
   }
@@ -78,9 +59,6 @@ public struct GridLayout: Hashable, Sendable {
 
   public var rows: Int { max(1, (count + columns - 1) / columns) }
 
-  public var cellWidth: Double { (area.width / Double(columns)).rounded(.down) }
-  public var cellHeight: Double { ((area.height - controllerHeight) / Double(rows)).rounded(.down) }
-
   public func position(of index: Int) -> GridPosition {
     GridPosition(column: index % columns, row: index / columns)
   }
@@ -92,25 +70,6 @@ public struct GridLayout: Hashable, Sendable {
     }
     let index = position.row * columns + position.column
     return index < count ? index : nil
-  }
-
-  public func frame(forWindowAt index: Int) -> Rect {
-    let position = position(of: index)
-    return Rect(
-      x: area.x + Double(position.column) * cellWidth,
-      y: area.y + Double(position.row) * cellHeight,
-      width: cellWidth,
-      height: cellHeight
-    )
-  }
-
-  public var controllerFrame: Rect {
-    Rect(x: area.x, y: area.maxY - controllerHeight, width: area.width, height: controllerHeight)
-  }
-
-  /// The frame for a single window filling everything above the controller.
-  public var zoomedFrame: Rect {
-    Rect(x: area.x, y: area.y, width: area.width, height: area.height - controllerHeight)
   }
 
   /// Moves from `index` one step in `direction`, wrapping at the edges and
@@ -127,5 +86,54 @@ public struct GridLayout: Hashable, Sendable {
       }
     } while self.index(at: position) == nil
     return self.index(at: position)!
+  }
+}
+
+/// Where each window goes: a `GridShape` placed in the tiling area, with the
+/// controller window running along the bottom.
+///
+/// ```
+/// ┌────────┬────────┬────────┐
+/// │ 0      │ 1      │ 2      │
+/// ├────────┼────────┼────────┤
+/// │ 3      │ 4      │        │
+/// ├────────┴────────┴────────┤
+/// │ controller               │
+/// └──────────────────────────┘
+/// ```
+public struct GridLayout: Hashable, Sendable {
+  public let shape: GridShape
+  /// The whole tiling area, including the controller.
+  public let area: Rect
+  public let controllerHeight: Double
+
+  public init(shape: GridShape, area: Rect, controllerHeight: Double) {
+    self.shape = shape
+    self.area = area
+    self.controllerHeight = controllerHeight
+  }
+
+  public var cellWidth: Double { (area.width / Double(shape.columns)).rounded(.down) }
+  public var cellHeight: Double {
+    ((area.height - controllerHeight) / Double(shape.rows)).rounded(.down)
+  }
+
+  public func frame(forWindowAt index: Int) -> Rect {
+    let position = shape.position(of: index)
+    return Rect(
+      x: area.x + Double(position.column) * cellWidth,
+      y: area.y + Double(position.row) * cellHeight,
+      width: cellWidth,
+      height: cellHeight
+    )
+  }
+
+  public var controllerFrame: Rect {
+    Rect(x: area.x, y: area.maxY - controllerHeight, width: area.width, height: controllerHeight)
+  }
+
+  /// The frame for a single window filling everything above the controller.
+  public var zoomedFrame: Rect {
+    Rect(x: area.x, y: area.y, width: area.width, height: area.height - controllerHeight)
   }
 }

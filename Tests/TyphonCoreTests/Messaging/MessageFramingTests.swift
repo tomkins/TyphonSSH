@@ -7,6 +7,7 @@ import TyphonCore
     .hello(id: SessionID(3), tty: "/dev/ttys004"),
     .input(Data("ls -l\r".utf8)),
     .input(Data([0x1B, 0x4F, 0x41, 0x00, 0xFF])),
+    .exited(code: 255),
   ]
 
   @Test func roundTripsWhenDeliveredWhole() throws {

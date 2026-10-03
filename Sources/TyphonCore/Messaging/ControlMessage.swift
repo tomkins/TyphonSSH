@@ -5,6 +5,8 @@ public enum ControlMessage: Hashable, Codable, Sendable {
   /// Sent by a session as soon as it connects.
   /// The controller finds the session's Terminal window by its `tty`.
   case hello(id: SessionID, tty: String)
+  /// Sent by a session just before it exits, with ssh's exit code.
+  case exited(code: Int32)
   /// Sent by the controller: bytes to feed into the session as if typed.
   case input(Data)
 }

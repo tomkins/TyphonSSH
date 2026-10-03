@@ -21,10 +21,12 @@ let package = Package(
       name: "TyphonCore",
       swiftSettings: swiftSettings
     ),
+    // fork/exec and ioctl, which can't safely be called from Swift.
+    .target(name: "CTyphonSupport"),
     // The macOS side: Terminal.app scripting, screens, pseudo-terminals and sockets.
     .target(
       name: "TyphonTerminal",
-      dependencies: ["TyphonCore"],
+      dependencies: ["TyphonCore", "CTyphonSupport"],
       swiftSettings: swiftSettings
     ),
     .executableTarget(

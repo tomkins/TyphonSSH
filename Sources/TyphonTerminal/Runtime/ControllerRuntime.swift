@@ -125,6 +125,10 @@ public final class ControllerRuntime {
         background: configuration.colors.controller.background ?? original.background
       )
       try terminal.setColors(controllerColors, of: window)
+      // Settle the controller's height before the sessions open, so the
+      // first tiling is the last; see `retile()`.
+      try terminal.setFrame(currentLayout.controllerFrame, of: window)
+      controllerHeight = max(controllerHeight, try terminal.frame(of: window).height)
     } catch {
       state.show(status: "\(error)")
     }

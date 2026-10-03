@@ -55,6 +55,8 @@ final class FakeTerminal: TerminalApp {
 
   func setFrame(_ frame: Rect, of window: TerminalWindowID) throws {
     calls.append(.setFrame(frame, window))
+    var frame = frame
+    frame.height = max(frame.height, minimumHeight)
     frames[window] = frame
   }
 
@@ -128,6 +130,7 @@ final class RecordingNotifier: Notifier {
     #expect(
       terminal.calls == [
         .setColors(scheme, terminal.controllerWindow),
+        .setFrame(Rect(x: 0, y: 725, width: 1200, height: 87), terminal.controllerWindow),
         .open(
           " exec /bin/tyssh _session --socket /tmp/t.sock --id 1 --token token1 --title web1 -- ssh -- web1"
         ),
@@ -149,14 +152,17 @@ final class RecordingNotifier: Notifier {
     let runtime = makeRuntime()
     runtime.start()
 
+    // Measured before the sessions open, so they're tiled only once.
     let arrangements = terminal.calls.filter { if case .arrange = $0 { true } else { false } }
     #expect(
-      arrangements.last
-        == .arrange([
-          WindowPlacement(window: 101, frame: Rect(x: 0, y: 25, width: 600, height: 667)),
-          WindowPlacement(window: 102, frame: Rect(x: 600, y: 25, width: 600, height: 667)),
-          WindowPlacement(window: 1, frame: Rect(x: 0, y: 692, width: 1200, height: 120)),
-        ]))
+      arrangements
+        == [
+          .arrange([
+            WindowPlacement(window: 101, frame: Rect(x: 0, y: 25, width: 600, height: 667)),
+            WindowPlacement(window: 102, frame: Rect(x: 600, y: 25, width: 600, height: 667)),
+            WindowPlacement(window: 1, frame: Rect(x: 0, y: 692, width: 1200, height: 120)),
+          ])
+        ])
 
     // The real height is remembered, so later retiles need only one pass.
     terminal.calls = []

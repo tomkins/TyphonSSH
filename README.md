@@ -10,7 +10,15 @@ tyssh web[1-4] username@db1:2222 cache
 
 ## Install
 
-Requires macOS 15 or later and Swift 6.4.
+Requires macOS 15 or later. Each [release](https://github.com/tomkins/TyphonSSH/releases) has a signed and notarized universal binary for Apple silicon and Intel Macs:
+
+```sh
+curl -LO https://github.com/tomkins/TyphonSSH/releases/latest/download/tyssh-VERSION-macos-universal.tar.gz
+tar -xzf tyssh-VERSION-macos-universal.tar.gz
+mv tyssh /usr/local/bin/
+```
+
+To build from source instead, you need Swift 6.4:
 
 ```sh
 swift build -c release

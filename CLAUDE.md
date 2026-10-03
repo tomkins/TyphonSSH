@@ -20,6 +20,8 @@ swift format lint -r Sources Tests            # lint; must print nothing
 
 All Swift code must be formatted with `swift format` (the default configuration; there is no `.swift-format` file). Before every commit, run `swift format -i -r Sources Tests`, then `swift format lint -r Sources Tests`, and fix anything lint still reports by hand: it can't rewrite every rule, such as `ReplaceForEachWithForLoop` or long lines it has no place to break. Every commit must pass lint with no warnings.
 
+To release, set `typhonVersion` in `Sources/TyphonCore/Support/Version.swift`, commit, and push a matching `X.Y.Z` tag. `.github/workflows/publish.yml` builds a universal binary, signs it with `Distribution/tyssh.entitlements` (the hardened runtime needs the Apple Events entitlement for `NSAppleScript`), notarizes it, and creates the GitHub Release.
+
 Tests use Swift Testing (`import Testing`, `@Suite`, `@Test`, `#expect`), not XCTest. Running `tyssh` for real drives Terminal.app and needs the macOS Automation and Accessibility permissions.
 
 ## Architecture

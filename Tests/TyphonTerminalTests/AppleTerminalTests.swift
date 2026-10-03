@@ -22,13 +22,23 @@ final class RecordingRunner: AppleScriptRunner {
   var terminal: AppleTerminal { AppleTerminal(runner: runner, waitForModifierRelease: {}) }
 
   @Test func opensWindowsAndReturnsTheirIDs() throws {
-    runner.replies = [.integer(4711)]
+    // `tab 1 of window id 4711`
+    runner.replies = [
+      .reference(
+        form: .index, key: .integer(1),
+        container: .reference(form: .id, key: .integer(4711), container: .none))
+    ]
     #expect(try terminal.openWindow(running: #"clear && exec tyssh session --host "a""#) == 4711)
     #expect(runner.scripts[0].contains(#"do script "clear && exec tyssh session --host \"a\"""#))
   }
 
-  @Test func throwsWhenNoWindowIsFound() {
-    runner.replies = [.none]
+  @Test(arguments: [
+    AppleScriptValue.none,
+    .integer(4711),
+    .reference(form: .index, key: .integer(1), container: .none),
+  ])
+  func throwsWhenNoWindowIsFound(reply: AppleScriptValue) {
+    runner.replies = [reply]
     #expect(throws: TerminalError.unexpectedResult("a new window")) {
       try terminal.openWindow(running: "x")
     }
@@ -111,6 +121,32 @@ final class RecordingRunner: AppleScriptRunner {
     var error: NSDictionary?
     let compiled = script.compileAndReturnError(&error)
     #expect(compiled, "\(error ?? [:])\n\(source)")
+  }
+}
+
+@Suite struct AppleScriptValueTests {
+  @Test func readsReferences() {
+    // What Terminal's `do script` replies with: `tab 1 of window id 7801`.
+    let window = specifier(
+      form: formUniqueID, key: NSAppleEventDescriptor(int32: 7801), container: .null())
+    let tab = specifier(
+      form: formAbsolutePosition, key: NSAppleEventDescriptor(int32: 1), container: window)
+    #expect(
+      AppleScriptValue(tab)
+        == .reference(
+          form: .index, key: .integer(1),
+          container: .reference(form: .id, key: .integer(7801), container: .none)))
+  }
+
+  private func specifier(form: Int, key: NSAppleEventDescriptor, container: NSAppleEventDescriptor)
+    -> NSAppleEventDescriptor
+  {
+    let record = NSAppleEventDescriptor.record()
+    record.setDescriptor(
+      NSAppleEventDescriptor(enumCode: OSType(form)), forKeyword: AEKeyword(keyAEKeyForm))
+    record.setDescriptor(key, forKeyword: AEKeyword(keyAEKeyData))
+    record.setDescriptor(container, forKeyword: AEKeyword(keyAEContainer))
+    return record.coerce(toDescriptorType: DescType(typeObjectSpecifier))!
   }
 }
 

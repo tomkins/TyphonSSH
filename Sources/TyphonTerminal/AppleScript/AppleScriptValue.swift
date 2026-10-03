@@ -9,11 +9,37 @@ public enum AppleScriptValue: Hashable, Sendable {
   case real(Double)
   case boolean(Bool)
   case list([AppleScriptValue])
+  /// A reference to an application's object, such as `tab 1 of window id 7801`:
+  /// how the object is picked out, by what, and the reference to what holds it
+  /// (`.none` for the application itself).
+  indirect case reference(form: ReferenceForm, key: AppleScriptValue, container: AppleScriptValue)
+
+  public enum ReferenceForm: Hashable, Sendable {
+    /// By position, as in `tab 1`.
+    case index
+    /// By unique ID, as in `window id 7801`.
+    case id
+    /// Any other way, such as by name.
+    case other
+  }
 
   init(_ descriptor: NSAppleEventDescriptor) {
     switch descriptor.descriptorType {
     case typeNull:
       self = .none
+    case typeObjectSpecifier:
+      let form: ReferenceForm =
+        switch descriptor.forKeyword(AEKeyword(keyAEKeyForm))?.enumCodeValue {
+        case OSType(formAbsolutePosition): .index
+        case OSType(formUniqueID): .id
+        default: .other
+        }
+      self = .reference(
+        form: form,
+        key: descriptor.forKeyword(AEKeyword(keyAEKeyData)).map(AppleScriptValue.init) ?? .none,
+        container: descriptor.forKeyword(AEKeyword(keyAEContainer)).map(AppleScriptValue.init)
+          ?? .none
+      )
     case typeAEList:
       self = .list(
         (0..<descriptor.numberOfItems).map {

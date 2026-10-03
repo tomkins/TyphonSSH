@@ -21,7 +21,13 @@ public struct AppleTerminal: TerminalApp {
   }
 
   public func openWindow(running command: String) throws -> TerminalWindowID {
-    guard let id = try runner.run(TerminalScript.openWindow(running: command)).integer else {
+    // The window's ID is in the reference to the new tab, saving a search of
+    // every tab for it, which grows slower with each window opened.
+    guard
+      case .reference(_, _, container: .reference(.id, let window, _)) = try runner.run(
+        TerminalScript.openWindow(running: command)),
+      let id = window.integer
+    else {
       throw TerminalError.unexpectedResult("a new window")
     }
     return id

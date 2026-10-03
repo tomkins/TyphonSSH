@@ -6,35 +6,23 @@ import TyphonCore
 enum TerminalScript {
   typealias Literal = AppleScriptLiteral
 
+  /// Replies with a reference to the new tab, such as `tab 1 of window id 7801`.
   static func openWindow(running command: String) -> String {
-    """
-    tell application "Terminal"
-    	set newTab to do script \(Literal.string(command))
-    	return my windowIDForTTY(tty of newTab)
-    end tell
-    \(windowIDForTTYHandler)
-    """
+    terminal(["return do script \(Literal.string(command))"])
   }
 
   static func windowID(forTTY tty: String) -> String {
-    """
-    return windowIDForTTY(\(Literal.string(tty)))
-    \(windowIDForTTYHandler)
-    """
+    terminal([
+      """
+      repeat with w in windows
+      	repeat with t in tabs of w
+      		if tty of t is \(Literal.string(tty)) then return id of w
+      	end repeat
+      end repeat
+      return missing value
+      """
+    ])
   }
-
-  private static let windowIDForTTYHandler = """
-    on windowIDForTTY(theTTY)
-    	tell application "Terminal"
-    		repeat with w in windows
-    			repeat with t in tabs of w
-    				if tty of t is theTTY then return id of w
-    			end repeat
-    		end repeat
-    	end tell
-    	return missing value
-    end windowIDForTTY
-    """
 
   static func arrange(_ placements: [WindowPlacement]) -> String {
     terminal(

@@ -232,8 +232,6 @@ public final class ControllerRuntime {
         appearance.colors(scheme: configuration.colors, original: original), of: window)
     case .hideSessions:
       try terminal.hide(sessionWindows)
-    case .minimizeSessions:
-      try terminal.minimize(sessionWindows)
     case .minimizeController:
       try terminal.minimize(controllerWindow.map { [$0] } ?? [])
     case .shortcut(let shortcut, let sessions, let includingController):

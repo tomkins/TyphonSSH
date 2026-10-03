@@ -26,7 +26,7 @@ extension ControllerMode {
       return [
         "Actions (Esc to exit, \(actionKey) to send \(actionKey) to input)",
         "[c]reate window, [r]etile, s[o]rt, [e]nable/disable input, e[n]able all, \(enableNext)"
-          + "[t]oggle enabled, [m]inimise, [h]ide, [s]end text, change [b]ounds, "
+          + "[t]oggle enabled, [m]inimise (and hide sessions), [h]ide sessions, [s]end text, change [b]ounds, "
           + "[g/G]rid, [f/F]ont size, split [p/P]anes, "
           + "[d]ump scrollback, e[x]it",
       ]

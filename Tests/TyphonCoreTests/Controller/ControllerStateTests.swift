@@ -157,7 +157,7 @@ let esc = "\u{1B}"
   @Test func hidesMinimisesAndQuits() {
     var harness = Harness()
     #expect(harness.type("\(ctrlA)h") == [.hideSessions])
-    #expect(harness.type("\(ctrlA)m") == [.minimizeSessions])
+    #expect(harness.type("\(ctrlA)m") == [.hideSessions, .minimizeController])
     #expect(harness.type("\(ctrlA)\u{08}") == [.hideSessions, .minimizeController])
     #expect(harness.type("\(ctrlA)x") == [.quit])
   }

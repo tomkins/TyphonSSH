@@ -212,13 +212,10 @@ public struct ControllerState: Sendable {
     case .character(" "):
       enableNext(effects: &effects)
       mode = .input
-    case .character("m"):
-      effects.append(.minimizeSessions)
-      mode = .input
     case .character("h"):
       effects.append(.hideSessions)
       mode = .input
-    case .control(0x08):  // Ctrl-H: get everything out of the way.
+    case .character("m"), .control(0x08):  // Ctrl-H: get everything out of the way.
       effects += [.hideSessions, .minimizeController]
       mode = .input
     case .character("x"):

@@ -51,25 +51,25 @@ Run `tyssh --help` for all options, such as `--login`, `--columns`, `--screen 1-
 
 What you type in the controller goes to every enabled session. Press **Ctrl-A** to open the action menu, and **Esc** to close it.
 
-| Keys         | Action |
-|--------------|--------|
-| `Ctrl-A`     | Send a literal Ctrl-A to the sessions |
-| `c`          | Add hosts (names, patterns or clusters) |
-| `r`          | Re-tile all windows (also un-hides, un-minimises and un-zooms them) |
-| `g` / `G`    | Use more / fewer grid columns |
-| `e`          | Select a window to enable, disable or zoom (see below) |
-| `n`          | Enable every session |
-| `t`          | Toggle every session between enabled and disabled |
-| `Space`      | With exactly one session enabled, move input to the next one |
-| `s`          | Send text: `h`ostname, `c`onnection string, window `i`d or `s`ession id |
-| `o`          | Order windows by `h`ostname or `i`d |
-| `b`          | Change the tiling area (see below) |
-| `p` / `P`    | Split / unsplit every window's pane |
-| `f` / `F`    | Smaller / bigger font everywhere |
-| `d`          | Save every session's scrollback to `~/<base>.<host>.txt` |
-| `m` / `h`    | Minimise / hide the sessions |
-| `Ctrl-H`     | Hide the sessions and minimise the controller |
-| `x`          | Close everything and exit |
+| Keys           | Action |
+|----------------|--------|
+| `Ctrl-A`       | Send a literal Ctrl-A to the sessions |
+| `c`            | Add hosts (names, patterns or clusters) |
+| `r`            | Re-tile all windows (also un-hides, un-minimises and un-zooms them) |
+| `g` / `G`      | Use more / fewer grid columns |
+| `e`            | Select a window to enable, disable or zoom (see below) |
+| `n`            | Enable every session |
+| `t`            | Toggle every session between enabled and disabled |
+| `Space`        | With exactly one session enabled, move input to the next one |
+| `s`            | Send text: `h`ostname, `c`onnection string, window `i`d or `s`ession id |
+| `o`            | Order windows by `h`ostname or `i`d |
+| `b`            | Change the tiling area (see below) |
+| `p` / `P`      | Split / unsplit every window's pane |
+| `f` / `F`      | Smaller / bigger font everywhere |
+| `d`            | Save every session's scrollback to `~/<base>.<host>.txt` |
+| `h`            | Hide the sessions |
+| `m` / `Ctrl-H` | Hide the sessions and minimise the controller |
+| `x`            | Close everything and exit |
 
 **Selecting windows (`e`):** move with the arrow keys or `h` `j` `k` `l`. Then press `e`nable, `d`isable or `t`oggle to change the selected window, `o` to disable all the others, or `O` to disable the others and zoom the selected one. Press `Esc` when finished.
 

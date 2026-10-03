@@ -17,7 +17,6 @@ public enum ControllerEffect: Hashable, Sendable {
   /// Recolour a session window.
   case setAppearance(SessionID, SessionAppearance)
   case hideSessions
-  case minimizeSessions
   case minimizeController
   /// Send a Terminal keyboard shortcut to the given sessions, and optionally the controller.
   case shortcut(TerminalShortcut, sessions: [SessionID], includingController: Bool)

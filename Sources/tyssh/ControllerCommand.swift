@@ -17,7 +17,13 @@ struct ControllerCommand: AsyncParsableCommand {
   func run() async throws {
     let planURL = URL(filePath: plan)
     let plan = try SessionPlan.decode(from: Data(contentsOf: planURL))
-    defer { try? FileManager.default.removeItem(at: planURL.deletingLastPathComponent()) }
+    try? FileManager.default.removeItem(at: planURL)
+    // Remove only what the launcher created, and the directory only once it's
+    // empty: never delete recursively on the strength of a path argument.
+    defer {
+      unlink(plan.socketPath)
+      rmdir(planURL.deletingLastPathComponent().path)
+    }
 
     let listener = try MessageListener(path: plan.socketPath)
     let rawMode = try RawMode()

@@ -54,16 +54,6 @@ public struct ColorScheme: Hashable, Codable, Sendable {
   public var bounds = ColorPair(background: TerminalColor(red: 17990, green: 35209, blue: 53456))
 
   public init() {}
-
-  public init(from decoder: any Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
-    let defaults = ColorScheme()
-    controller =
-      try container.decodeIfPresent(ColorPair.self, forKey: .controller) ?? defaults.controller
-    selected = try container.decodeIfPresent(ColorPair.self, forKey: .selected) ?? defaults.selected
-    disabled = try container.decodeIfPresent(ColorPair.self, forKey: .disabled) ?? defaults.disabled
-    bounds = try container.decodeIfPresent(ColorPair.self, forKey: .bounds) ?? defaults.bounds
-  }
 }
 
 extension Configuration {

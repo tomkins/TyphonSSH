@@ -30,24 +30,30 @@ public enum MessageFraming {
 /// Reassembles messages from bytes that may arrive split or coalesced.
 public struct MessageDecoder: Sendable {
   private var buffer = Data()
+  /// How many bytes at the front of `buffer` have already been decoded.
+  /// They're dropped on the next append, rather than after every message.
+  private var consumed = 0
+  private let decoder = JSONDecoder()
 
   public init() {}
 
   public mutating func append(_ data: Data) {
+    buffer.removeFirst(consumed)
+    consumed = 0
     buffer.append(data)
   }
 
   /// Returns the next complete message, or `nil` if more bytes are needed.
   public mutating func next() throws(MessageDecodingError) -> ControlMessage? {
-    guard buffer.count >= 4 else { return nil }
-    let length = buffer.prefix(4).reduce(0) { $0 << 8 | Int($1) }
+    let unread = buffer.dropFirst(consumed)
+    guard unread.count >= 4 else { return nil }
+    let length = unread.prefix(4).reduce(0) { $0 << 8 | Int($1) }
     guard length <= MessageFraming.maximumPayloadSize else { throw .frameTooLarge(length) }
-    guard buffer.count >= 4 + length else { return nil }
+    guard unread.count >= 4 + length else { return nil }
 
-    let payload = buffer.dropFirst(4).prefix(length)
-    buffer = Data(buffer.dropFirst(4 + length))
+    consumed += 4 + length
     do {
-      return try JSONDecoder().decode(ControlMessage.self, from: payload)
+      return try decoder.decode(ControlMessage.self, from: unread.dropFirst(4).prefix(length))
     } catch {
       throw .malformed
     }

@@ -266,6 +266,19 @@ final class RecordingNotifier: Notifier {
     #expect(runtime.state.prompt.last == "Saved 2 scrollback files, e.g. ~/scroll.web1.txt")
   }
 
+  @Test func reportsAbsoluteScrollbackPathsAsWritten() throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let runtime = makeRuntime()
+    runtime.start()
+
+    let base = directory.appending(path: "scroll").path
+    runtime.handleInput(Data("\u{01}d\(base)\r".utf8))
+    #expect(FileManager.default.fileExists(atPath: "\(base).web1.txt"))
+    #expect(runtime.state.prompt.last == "Saved 2 scrollback files, e.g. \(base).web1.txt")
+  }
+
   @Test func staysOpenToShowWhyWindowsCouldNotOpen() {
     terminal.failOpening = true
     let runtime = makeRuntime()

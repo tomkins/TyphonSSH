@@ -340,18 +340,21 @@ public final class ControllerRuntime {
     for dump in dumps {
       guard let window = state.roster[dump.session]?.windowID else { continue }
       let url =
-        dump.path.hasPrefix("/")
+        isAbsolute(dump.path)
         ? URL(filePath: dump.path)
         : environment.homeDirectory.appending(path: dump.path)
       try writePrivately(Data(terminal.history(of: window).utf8), to: url)
     }
     if let first = dumps.first {
+      let example = isAbsolute(first.path) ? first.path : "~/\(first.path)"
       state.show(
         status:
-          "Saved \(dumps.count) scrollback file\(dumps.count == 1 ? "" : "s"), e.g. ~/\(first.path)"
+          "Saved \(dumps.count) scrollback file\(dumps.count == 1 ? "" : "s"), e.g. \(example)"
       )
     }
   }
+
+  private func isAbsolute(_ path: String) -> Bool { path.hasPrefix("/") }
 
   /// Writes `data` readable only by the current user, as history often holds secrets.
   private func writePrivately(_ data: Data, to url: URL) throws {

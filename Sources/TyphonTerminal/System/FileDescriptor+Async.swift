@@ -12,11 +12,13 @@ extension FileDescriptor {
       let source = DispatchSource.makeReadSource(
         fileDescriptor: rawValue, queue: .global(qos: .userInteractive))
       source.setEventHandler {
-        var buffer = [UInt8](repeating: 0, count: maximumLength)
+        // The source reports how many bytes are waiting (0 at end-of-file).
+        var buffer = Data(count: min(max(Int(source.data), 1), maximumLength))
         let count =
           (try? buffer.withUnsafeMutableBytes { try read(into: $0, retryOnInterrupt: true) }) ?? 0
         if count > 0 {
-          continuation.yield(Data(buffer[..<count]))
+          buffer.count = count
+          continuation.yield(buffer)
         } else {
           source.cancel()
         }
@@ -26,5 +28,4 @@ extension FileDescriptor {
       source.resume()
     }
   }
-
 }

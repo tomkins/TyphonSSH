@@ -276,7 +276,12 @@ final class RecordingNotifier: Notifier {
 
     runtime.sessionDisconnected(SessionID(1), exitCode: 255)
     runtime.sessionDisconnected(SessionID(2), exitCode: 0)
-    try await Task.sleep(for: .milliseconds(500))
+    // The close is delayed, so wait for it rather than for a fixed time, which
+    // a busy machine can overrun.
+    let deadline = ContinuousClock.now + .seconds(5)
+    while !terminal.calls.contains(.close([102])), ContinuousClock.now < deadline {
+      try await Task.sleep(for: .milliseconds(20))
+    }
     #expect(terminal.calls.contains(.close([102])))
     #expect(!terminal.calls.contains(.close([101])))
     #expect(notifier.messages == ["Closed web1", "Closed web2"])

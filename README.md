@@ -14,6 +14,7 @@ Requires macOS 15 or later. Install it with [Homebrew](https://brew.sh) from the
 
 ```sh
 brew tap tomkins/typhonssh https://github.com/tomkins/TyphonSSH
+brew trust --formula tomkins/typhonssh/tyssh
 brew install tyssh
 ```
 

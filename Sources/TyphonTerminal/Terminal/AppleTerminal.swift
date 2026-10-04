@@ -56,18 +56,27 @@ public struct AppleTerminal: TerminalApp {
     try runner.run(TerminalScript.setFrame(frame, of: window))
   }
 
-  public func colors(of window: TerminalWindowID) throws -> ColorPair {
-    let colors = try runner.run(TerminalScript.colors(of: window)).list?.map(
-      TerminalColor.init(appleScript:))
-    guard let colors, colors.count == 2 else {
+  public func colors(of windows: [TerminalWindowID]) throws -> [TerminalWindowID: ColorPair] {
+    guard !windows.isEmpty else { return [:] }
+    guard let replies = try runner.run(TerminalScript.colors(of: windows)).list,
+      replies.count == windows.count
+    else {
       throw TerminalError.unexpectedResult("window colours")
     }
-    return ColorPair(foreground: colors[0], background: colors[1])
+    var colors: [TerminalWindowID: ColorPair] = [:]
+    for (window, reply) in zip(windows, replies) {
+      guard let pair = reply.list?.map(TerminalColor.init(appleScript:)), pair.count == 2 else {
+        continue  // The window has gone.
+      }
+      colors[window] = ColorPair(foreground: pair[0], background: pair[1])
+    }
+    return colors
   }
 
-  public func setColors(_ colors: ColorPair, of window: TerminalWindowID) throws {
-    guard colors.foreground != nil || colors.background != nil else { return }
-    try runner.run(TerminalScript.setColors(colors, of: window))
+  public func setColors(_ colors: [TerminalWindowID: ColorPair]) throws {
+    let colors = colors.filter { $0.value.foreground != nil || $0.value.background != nil }
+    guard !colors.isEmpty else { return }
+    try runner.run(TerminalScript.setColors(colors))
   }
 
   public func setProfile(_ name: String, of window: TerminalWindowID) throws {

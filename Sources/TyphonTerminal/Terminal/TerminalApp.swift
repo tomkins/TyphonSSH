@@ -19,9 +19,10 @@ public protocol TerminalApp {
   func frame(of window: TerminalWindowID) throws -> Rect
   func setFrame(_ frame: Rect, of window: TerminalWindowID) throws
 
-  func colors(of window: TerminalWindowID) throws -> ColorPair
-  /// Sets whichever colours are present in `colors`.
-  func setColors(_ colors: ColorPair, of window: TerminalWindowID) throws
+  /// Each window's colours, leaving out any that couldn't be read.
+  func colors(of windows: [TerminalWindowID]) throws -> [TerminalWindowID: ColorPair]
+  /// Sets whichever colours are present for each window.
+  func setColors(_ colors: [TerminalWindowID: ColorPair]) throws
   /// Applies a Terminal profile ("settings set") by name.
   func setProfile(_ name: String, of window: TerminalWindowID) throws
 
@@ -35,6 +36,19 @@ public protocol TerminalApp {
   func send(
     _ shortcut: TerminalShortcut, to windows: [TerminalWindowID], thenFocus focus: TerminalWindowID?
   ) throws
+}
+
+extension TerminalApp {
+  func colors(of window: TerminalWindowID) throws -> ColorPair {
+    guard let colors = try colors(of: [window])[window] else {
+      throw TerminalError.unexpectedResult("window colours")
+    }
+    return colors
+  }
+
+  func setColors(_ colors: ColorPair, of window: TerminalWindowID) throws {
+    try setColors([window: colors])
+  }
 }
 
 public struct WindowPlacement: Hashable, Sendable {

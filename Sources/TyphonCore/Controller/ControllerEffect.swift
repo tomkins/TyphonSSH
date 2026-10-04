@@ -14,8 +14,8 @@ public enum ControllerEffect: Hashable, Sendable {
   case retile
   /// Expand one session to fill the area above the controller.
   case zoom(SessionID)
-  /// Recolour a session window.
-  case setAppearance(SessionID, SessionAppearance)
+  /// Recolour session windows, all at once.
+  case setAppearances([SessionID: SessionAppearance])
   case hideSessions
   case minimizeController
   /// Send a Terminal keyboard shortcut to the given sessions, and optionally the controller.

@@ -133,7 +133,8 @@ let esc = "\u{1B}"
     var harness = Harness(hosts: ["a", "b"])
     let effects = harness.type("\(ctrlA)t")
     #expect(harness.enabled.isEmpty)
-    #expect(effects == harness.ids.map { .setAppearance($0, SessionAppearance(isEnabled: false)) })
+    let disabled = harness.ids.map { ($0, SessionAppearance(isEnabled: false)) }
+    #expect(effects == [.setAppearances(Dictionary(uniqueKeysWithValues: disabled))])
     harness.type("\(ctrlA)n")
     #expect(harness.enabled == ["a", "b"])
   }
@@ -188,13 +189,15 @@ let esc = "\u{1B}"
   @Test func movesTheSelectionAroundTheGrid() {
     var harness = Harness()
     let enter = harness.type("\(ctrlA)e")
-    #expect(enter == [.setAppearance(harness.ids[0], SessionAppearance(isSelected: true))])
+    #expect(enter == [.setAppearances([harness.ids[0]: SessionAppearance(isSelected: true)])])
 
     let moved = harness.type("\(esc)[B")
     #expect(
       moved == [
-        .setAppearance(harness.ids[0], SessionAppearance()),
-        .setAppearance(harness.ids[3], SessionAppearance(isSelected: true)),
+        .setAppearances([
+          harness.ids[0]: SessionAppearance(),
+          harness.ids[3]: SessionAppearance(isSelected: true),
+        ])
       ])
     harness.type("ll")  // db1 → db2 → wraps to db1, skipping the empty cell
     #expect(harness.state.mode == .select(index: 3))

@@ -247,12 +247,8 @@ public final class ControllerRuntime {
         placements.append(WindowPlacement(window: controllerWindow, frame: layout.controllerFrame))
       }
       try terminal.arrange(placements)
-    case .setAppearance(let id, let appearance):
-      guard let window = state.roster[id]?.windowID else { return }
-      let original = try originalColors[id] ?? terminal.colors(of: window)
-      originalColors[id] = original
-      try terminal.setColors(
-        appearance.colors(scheme: configuration.colors, original: original), of: window)
+    case .setAppearances(let appearances):
+      try recolor(appearances)
     case .hideSessions:
       try terminal.hide(sessionWindows)
     case .minimizeController:
@@ -292,6 +288,22 @@ public final class ControllerRuntime {
     if let profile = configuration.sessionProfile {
       try terminal.setProfile(profile, of: window)
     }
+  }
+
+  /// Recolours windows from the colours they started with, reading those the first time.
+  private func recolor(_ appearances: [SessionID: SessionAppearance]) throws {
+    let windows = appearances.keys.compactMap { id in state.roster[id]?.windowID.map { (id, $0) } }
+    let unread = windows.filter { id, _ in originalColors[id] == nil }
+    if !unread.isEmpty {
+      let read = try terminal.colors(of: unread.map(\.1))
+      for (id, window) in unread { originalColors[id] = read[window] }
+    }
+    var colors: [TerminalWindowID: ColorPair] = [:]
+    for (id, window) in windows {
+      guard let original = originalColors[id], let appearance = appearances[id] else { continue }
+      colors[window] = appearance.colors(scheme: configuration.colors, original: original)
+    }
+    try terminal.setColors(colors)
   }
 
   private var currentLayout: GridLayout {

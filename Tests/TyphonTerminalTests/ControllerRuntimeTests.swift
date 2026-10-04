@@ -11,7 +11,7 @@ final class FakeTerminal: TerminalApp {
     case open(String)
     case arrange([WindowPlacement])
     case setFrame(Rect, TerminalWindowID)
-    case setColors(ColorPair, TerminalWindowID)
+    case setColors([TerminalWindowID: ColorPair])
     case setProfile(String, TerminalWindowID)
     case hide([TerminalWindowID])
     case minimize([TerminalWindowID])
@@ -60,9 +60,13 @@ final class FakeTerminal: TerminalApp {
     frames[window] = frame
   }
 
-  func colors(of window: TerminalWindowID) throws -> ColorPair { original }
-  func setColors(_ colors: ColorPair, of window: TerminalWindowID) throws {
-    calls.append(.setColors(colors, window))
+  var colorReads: [[TerminalWindowID]] = []
+  func colors(of windows: [TerminalWindowID]) throws -> [TerminalWindowID: ColorPair] {
+    colorReads.append(windows)
+    return Dictionary(uniqueKeysWithValues: windows.map { ($0, original) })
+  }
+  func setColors(_ colors: [TerminalWindowID: ColorPair]) throws {
+    calls.append(.setColors(colors))
   }
   func setProfile(_ name: String, of window: TerminalWindowID) throws {
     calls.append(.setProfile(name, window))
@@ -129,7 +133,7 @@ final class RecordingNotifier: Notifier {
     let scheme = Configuration().colors.controller
     #expect(
       terminal.calls == [
-        .setColors(scheme, terminal.controllerWindow),
+        .setColors([terminal.controllerWindow: scheme]),
         .setFrame(Rect(x: 0, y: 725, width: 1200, height: 87), terminal.controllerWindow),
         .open(
           " exec /bin/tyssh _session --socket /tmp/t.sock --id 1 --token token1 --title web1 -- ssh -- web1"
@@ -179,7 +183,25 @@ final class RecordingNotifier: Notifier {
     runtime.handleInput(Data("\u{1B}".utf8))  // and back
     let selected = SessionAppearance(isSelected: true).colors(
       scheme: Configuration().colors, original: terminal.original)
-    #expect(terminal.calls == [.setColors(selected, 101), .setColors(terminal.original, 101)])
+    #expect(terminal.calls == [.setColors([101: selected]), .setColors([101: terminal.original])])
+  }
+
+  @Test func recoloursEveryWindowAtOnce() throws {
+    let runtime = makeRuntime(hosts: ["web1", "web2", "web3"])
+    runtime.start()
+    terminal.calls = []
+    terminal.colorReads = []
+
+    runtime.handleInput(Data("\u{01}t".utf8))  // disable all
+    runtime.handleInput(Data("\u{01}n".utf8))  // and enable them again
+    let disabled = SessionAppearance(isEnabled: false).colors(
+      scheme: Configuration().colors, original: terminal.original)
+    #expect(
+      terminal.calls == [
+        .setColors([101: disabled, 102: disabled, 103: disabled]),
+        .setColors([101: terminal.original, 102: terminal.original, 103: terminal.original]),
+      ])
+    #expect(terminal.colorReads.map(Set.init) == [[101, 102, 103]])
   }
 
   @Test func zoomsAboveTheController() throws {
@@ -206,7 +228,7 @@ final class RecordingNotifier: Notifier {
     #expect(
       terminal.calls == [
         .hide([101, 102]),
-        .setColors(Configuration().colors.bounds, 1),
+        .setColors([1: Configuration().colors.bounds]),
         .arrange([WindowPlacement(window: 1, frame: Rect(x: 0, y: 25, width: 1200, height: 787))]),
       ])
 

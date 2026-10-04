@@ -47,22 +47,35 @@ enum TerminalScript {
     terminal(["set bounds of window id \(window) to \(Literal.bounds(frame))"])
   }
 
-  static func colors(of window: TerminalWindowID) -> String {
-    terminal([
-      "set t to selected tab of window id \(window)",
-      "return {normal text color of t, background color of t}",
-    ])
+  /// Replies with a list holding, for each window in turn, its
+  /// `{foreground, background}` or `missing value` if it has gone.
+  static func colors(of windows: [TerminalWindowID]) -> String {
+    terminal(
+      ["set replies to {}"]
+        + windows.map { window in
+          """
+          try
+          	set t to selected tab of window id \(window)
+          	set end of replies to {normal text color of t, background color of t}
+          on error
+          	set end of replies to missing value
+          end try
+          """
+        } + ["return replies"])
   }
 
-  static func setColors(_ colors: ColorPair, of window: TerminalWindowID) -> String {
-    var lines = ["set t to selected tab of window id \(window)"]
-    if let foreground = colors.foreground {
-      lines.append("set normal text color of t to \(foreground.appleScriptLiteral)")
-    }
-    if let background = colors.background {
-      lines.append("set background color of t to \(background.appleScriptLiteral)")
-    }
-    return terminal(lines)
+  static func setColors(_ colors: [TerminalWindowID: ColorPair]) -> String {
+    terminal(
+      colors.sorted { $0.key < $1.key }.map { window, colors in
+        var lines = ["try", "\tset t to selected tab of window id \(window)"]
+        if let foreground = colors.foreground {
+          lines.append("\tset normal text color of t to \(foreground.appleScriptLiteral)")
+        }
+        if let background = colors.background {
+          lines.append("\tset background color of t to \(background.appleScriptLiteral)")
+        }
+        return (lines + ["end try"]).joined(separator: "\n")
+      })
   }
 
   static func setProfile(_ name: String, of window: TerminalWindowID) -> String {

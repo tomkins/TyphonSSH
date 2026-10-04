@@ -57,7 +57,8 @@ final class RecordingRunner: AppleScriptRunner {
   @Test func skipsScriptsWithNothingToDo() throws {
     try terminal.arrange([])
     try terminal.hide([])
-    try terminal.setColors(ColorPair(), of: 1)
+    try terminal.setColors([1: ColorPair()])
+    #expect(try terminal.colors(of: []) == [:])
     try terminal.send(.splitPane, to: [], thenFocus: 9)
     #expect(runner.scripts.isEmpty)
   }
@@ -67,20 +68,25 @@ final class RecordingRunner: AppleScriptRunner {
     #expect(try terminal.frame(of: 1) == Rect(x: 10, y: 20, width: 100, height: 50))
   }
 
-  @Test func readsAndWritesColors() throws {
-    runner.replies = [
-      .list([
-        .list([.integer(65535), .integer(65535), .integer(65535)]),
-        .list([.integer(0), .integer(0), .integer(0)]),
-      ])
-    ]
+  @Test func readsAndWritesColorsInOneScript() throws {
+    let white = AppleScriptValue.list([.integer(65535), .integer(65535), .integer(65535)])
+    let black = AppleScriptValue.list([.integer(0), .integer(0), .integer(0)])
+    // Window 4 has closed.
+    runner.replies = [.list([.list([white, black]), .none])]
     #expect(
-      try terminal.colors(of: 3)
-        == ColorPair(foreground: .white, background: TerminalColor("#000000")))
+      try terminal.colors(of: [3, 4])
+        == [3: ColorPair(foreground: .white, background: TerminalColor("#000000"))])
 
-    try terminal.setColors(ColorPair(background: TerminalColor("{1,2,3}")), of: 3)
-    #expect(runner.scripts[1].contains("set background color of t to {1, 2, 3}"))
-    #expect(!runner.scripts[1].contains("normal text color"))
+    try terminal.setColors([
+      3: ColorPair(background: TerminalColor("{1,2,3}")),
+      4: ColorPair(foreground: .white),
+      5: ColorPair(),
+    ])
+    #expect(runner.scripts.count == 2)
+    let script = runner.scripts[1]
+    #expect(script.contains("set background color of t to {1, 2, 3}"))
+    #expect(script.contains("set normal text color of t to {65535, 65535, 65535}"))
+    #expect(!script.contains("window id 5"))
   }
 
   @Test func sendsShortcutsThenRefocuses() throws {
@@ -107,8 +113,9 @@ final class RecordingRunner: AppleScriptRunner {
     ]),
     TerminalScript.frame(of: 1),
     TerminalScript.setFrame(Rect(x: 0, y: 0, width: 10, height: 10), of: 1),
-    TerminalScript.colors(of: 1),
-    TerminalScript.setColors(ColorPair(foreground: .white, background: .white), of: 1),
+    TerminalScript.colors(of: [1, 2]),
+    TerminalScript.setColors([1: ColorPair(foreground: .white, background: .white), 2: ColorPair()]
+    ),
     TerminalScript.setProfile("Pro", of: 1),
     TerminalScript.set("visible", to: false, of: [1, 2]),
     TerminalScript.close([1]),

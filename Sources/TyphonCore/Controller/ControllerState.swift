@@ -106,14 +106,10 @@ public struct ControllerState: Sendable {
     }
 
     // Recolour windows whose state changed. New windows already look right.
-    let appearancesAfter = appearances
-    for session in roster.ordered {
-      if let before = appearancesBefore[session.id], let after = appearancesAfter[session.id],
-        before != after
-      {
-        effects.append(.setAppearance(session.id, after))
-      }
+    let changed = appearances.filter { id, after in
+      appearancesBefore[id].map { $0 != after } ?? false
     }
+    if !changed.isEmpty { effects.append(.setAppearances(changed)) }
     return effects
   }
 

@@ -10,7 +10,16 @@ tyssh web[1-4] username@db1:2222 cache
 
 ## Install
 
-Requires macOS 15 or later. Each [release](https://github.com/tomkins/TyphonSSH/releases) has a signed and notarized universal binary for Apple silicon and Intel Macs:
+Requires macOS 15 or later. Install it with [Homebrew](https://brew.sh) from the tap in this repository:
+
+```sh
+brew tap tomkins/typhonssh https://github.com/tomkins/TyphonSSH
+brew install tyssh
+```
+
+`brew upgrade tyssh` picks up new releases.
+
+Or install it by hand. Each [release](https://github.com/tomkins/TyphonSSH/releases) has a signed and notarized universal binary for Apple Silicon and Intel Macs:
 
 ```sh
 curl -LO https://github.com/tomkins/TyphonSSH/releases/latest/download/tyssh-VERSION-macos-universal.tar.gz

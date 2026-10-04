@@ -1,8 +1,4 @@
-#if canImport(Darwin)
-  import Darwin
-#elseif canImport(Glibc)
-  import Glibc
-#endif
+import Darwin
 
 /// An IPv4 address held as a host-order integer, so subnets can be enumerated arithmetically.
 public struct IPv4Address: Hashable, Comparable, Sendable, CustomStringConvertible {

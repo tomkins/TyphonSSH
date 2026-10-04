@@ -77,8 +77,6 @@ jobs:
           mkdir -p dist
           archive="tyssh-${GITHUB_REF_NAME}-macos-universal.tar.gz"
           tar -czf "dist/$archive" -C "$RUNNER_TEMP/stage" tyssh
-          (cd dist && shasum -a 256 "$archive" > "$archive.sha256")
-          cat dist/*.sha256
       - name: Attest build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:

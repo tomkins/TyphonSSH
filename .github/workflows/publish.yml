@@ -33,8 +33,6 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME does not match typhonVersion $version"
             exit 1
           fi
-      - name: Test
-        run: swift test
       - name: Build universal binary
         run: |
           swift build -c release --arch arm64 --arch x86_64

@@ -229,17 +229,8 @@ public struct ControllerState: Sendable {
     }
     let selected = ordered[index].id
 
-    switch key {
+    switch key.withVimArrows {
     case .arrow(let direction, _):
-      mode = .select(index: shape.index(movingFrom: index, direction))
-    case .character(let character) where "hjkl".contains(character):
-      let direction: Direction =
-        switch character {
-        case "h": .left
-        case "j": .down
-        case "k": .up
-        default: .right
-        }
       mode = .select(index: shape.index(movingFrom: index, direction))
     case .escape, .enter:
       mode = .input
@@ -265,17 +256,13 @@ public struct ControllerState: Sendable {
 
   private mutating func handleBounds(_ key: Key, effects: inout [ControllerEffect]) {
     let command: BoundsCommand
-    switch key {
+    switch key.withVimArrows {
     case .arrow(let direction, modified: true): command = .resize(direction)
     case .arrow(let direction, modified: false): command = .move(direction)
     case .control(0x08): command = .resize(.left)  // Ctrl-H
     case .control(0x0A): command = .resize(.down)  // Ctrl-J
     case .control(0x0B): command = .resize(.up)  // Ctrl-K
     case .control(0x0C): command = .resize(.right)  // Ctrl-L
-    case .character("h"): command = .move(.left)
-    case .character("j"): command = .move(.down)
-    case .character("k"): command = .move(.up)
-    case .character("l"): command = .move(.right)
     case .character("r"): command = .reset
     case .character("f"): command = .fillScreen
     case .character("p"): command = .print

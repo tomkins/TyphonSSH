@@ -11,6 +11,19 @@ public enum Key: Hashable, Sendable {
   case arrow(Direction, modified: Bool)
   /// An escape sequence we don't interpret.
   case unknown([UInt8])
+
+  /// This key, with h, j, k and l read as unmodified arrow keys, as in vi.
+  public var withVimArrows: Key {
+    let direction: Direction? =
+      switch self {
+      case .character("h"): .left
+      case .character("j"): .down
+      case .character("k"): .up
+      case .character("l"): .right
+      default: nil
+      }
+    return direction.map { .arrow($0, modified: false) } ?? self
+  }
 }
 
 /// Decodes raw terminal input into `Key`s.

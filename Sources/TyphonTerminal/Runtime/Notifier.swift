@@ -4,12 +4,6 @@ public protocol Notifier {
   func notify(_ message: String)
 }
 
-/// Discards notifications.
-public struct SilentNotifier: Notifier {
-  public init() {}
-  public func notify(_ message: String) {}
-}
-
 /// Posts notifications through Terminal, so they appear as coming from it.
 ///
 /// A command-line tool has no app bundle, so it can't use the UserNotifications

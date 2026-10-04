@@ -7,7 +7,6 @@ public enum AppleScriptValue: Hashable, Sendable {
   case text(String)
   case integer(Int)
   case real(Double)
-  case boolean(Bool)
   case list([AppleScriptValue])
   /// A reference to an application's object, such as `tab 1 of window id 7801`:
   /// how the object is picked out, by what, and the reference to what holds it
@@ -49,8 +48,6 @@ public enum AppleScriptValue: Hashable, Sendable {
       self = .integer(Int(descriptor.int32Value))
     case typeIEEE32BitFloatingPoint, typeIEEE64BitFloatingPoint:
       self = .real(descriptor.doubleValue)
-    case typeBoolean, typeTrue, typeFalse:
-      self = .boolean(descriptor.booleanValue)
     default:
       self = descriptor.stringValue.map(AppleScriptValue.text) ?? .none
     }

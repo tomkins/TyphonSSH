@@ -1,2 +1,2 @@
 /// The current version of TyphonSSH.
-public let typhonVersion = "0.1"
+public let typhonVersion = "0.2"

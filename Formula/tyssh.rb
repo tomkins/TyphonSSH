@@ -2,8 +2,8 @@
 class Tyssh < Formula
   desc "Cluster SSH for macOS Terminal.app"
   homepage "https://github.com/tomkins/TyphonSSH"
-  url "https://github.com/tomkins/TyphonSSH/releases/download/0.1/tyssh-0.1-macos-universal.tar.gz"
-  sha256 "702d13d6f56d3578a440e9dbcceb949447c6f6faf797d89c4c279fdbd6fee639"
+  url "https://github.com/tomkins/TyphonSSH/releases/download/0.2/tyssh-0.2-macos-universal.tar.gz"
+  sha256 "f01cf050cba6984ccea7119ef32fe80b5473ee850e5e409b7c355ee908f8d0c7"
   license "BSD-3-Clause"
 
   depends_on macos: :sequoia

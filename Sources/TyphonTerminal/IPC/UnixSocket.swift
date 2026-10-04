@@ -78,6 +78,11 @@ public final class MessageConnection: Sendable {
   /// they surface as the end of `messages()`.
   public func send(_ message: ControlMessage) {
     guard let frame = try? MessageFraming.encode(message) else { return }
+    send(frame: frame)
+  }
+
+  /// Queues a frame already encoded with `MessageFraming`, such as one broadcast to many sessions.
+  public func send(frame: Data) {
     writes.async { [descriptor] in
       _ = try? descriptor.writeAll(frame)
     }

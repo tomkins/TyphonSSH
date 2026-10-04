@@ -232,8 +232,9 @@ public final class ControllerRuntime {
   private func perform(_ effect: ControllerEffect) throws {
     switch effect {
     case .send(let data, let sessions):
+      let frame = try MessageFraming.encode(.input(data))
       for id in sessions {
-        connections[id]?.send(.input(data))
+        connections[id]?.send(frame: frame)
       }
     case .openSession(let id, let host):
       try openWindow(for: id, host: host)

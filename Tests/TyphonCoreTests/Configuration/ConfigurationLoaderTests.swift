@@ -47,7 +47,7 @@ import TyphonCore
     #expect(configuration.actionKey == ControlKey("ctrl-b"))
     #expect(configuration.sshArguments == ["-A"])
     #expect(configuration.tileColumns == 5)
-    #expect(configuration.screen == .span(1, 2))
+    #expect(configuration.screen == .screens([1, 2]))
     #expect(configuration.login == "deploy")
     #expect(configuration.clusters == ["web": ["web1", "web2"], "db": ["db2", "db3"]])
     // A colour pair given in a file replaces the default pair entirely.

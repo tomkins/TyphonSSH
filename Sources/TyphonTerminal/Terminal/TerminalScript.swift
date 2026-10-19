@@ -24,15 +24,16 @@ enum TerminalScript {
     ])
   }
 
-  static func arrange(_ placements: [WindowPlacement]) -> String {
+  /// Shows the windows and brings them forward in order, leaving where they
+  /// go to `WindowMover`.
+  static func arrange(_ windows: [TerminalWindowID]) -> String {
     terminal(
-      placements.map { placement in
+      windows.map { window in
         """
         try
-        	set w to window id \(placement.window)
+        	set w to window id \(window)
         	set miniaturized of w to false
         	set visible of w to true
-        	set bounds of w to \(Literal.bounds(placement.frame))
         	set frontmost of w to true
         end try
         """
@@ -43,8 +44,13 @@ enum TerminalScript {
     terminal(["return bounds of window id \(window)"])
   }
 
-  static func setFrame(_ frame: Rect, of window: TerminalWindowID) -> String {
-    terminal(["set bounds of window id \(window) to \(Literal.bounds(frame))"])
+  /// Terminal misplaces windows this way when there's a display above the main
+  /// one, so this is only a fallback; see `WindowMover`.
+  static func setFrames(_ placements: [WindowPlacement]) -> String {
+    terminal(
+      placements.map {
+        "try\n\tset bounds of window id \($0.window) to \(Literal.bounds($0.frame))\nend try"
+      })
   }
 
   /// Replies with a list holding, for each window in turn, its

@@ -84,7 +84,8 @@ final class FakeTerminal: TerminalApp {
 }
 
 struct FixedScreens: ScreenProvider {
-  func visibleFrames() -> [Rect] { [Rect(x: 0, y: 25, width: 1200, height: 787)] }
+  var frames = [Rect(x: 0, y: 25, width: 1200, height: 787)]
+  func visibleFrames() -> [Rect] { frames }
 }
 
 @MainActor
@@ -101,7 +102,8 @@ final class RecordingNotifier: Notifier {
     path: "tyssh-home-\(UUID().uuidString.prefix(8))")
 
   func makeRuntime(
-    hosts: [String] = ["web1", "web2"], configure: (inout Configuration) -> Void = { _ in }
+    hosts: [String] = ["web1", "web2"], screens: FixedScreens = FixedScreens(),
+    configure: (inout Configuration) -> Void = { _ in }
   ) -> ControllerRuntime {
     var configuration = Configuration()
     configuration.sessionProfile = "Quiet"
@@ -112,7 +114,7 @@ final class RecordingNotifier: Notifier {
     var tokens = 0
     let environment = ControllerRuntime.Environment(
       terminal: terminal,
-      screens: FixedScreens(),
+      screens: screens,
       notifier: notifier,
       output: TerminalOutput(FileDescriptor(rawValue: open("/dev/null", O_WRONLY))),
       commands: WindowCommands(executable: "/bin/tyssh"),
@@ -219,6 +221,27 @@ final class RecordingNotifier: Notifier {
     #expect(notifier.messages == ["Zoomed web2"])
   }
 
+  @Test func tilesEachSelectedScreen() throws {
+    let screens = FixedScreens(frames: [
+      Rect(x: 0, y: 25, width: 1200, height: 787),
+      Rect(x: 1200, y: -300, width: 1200, height: 700),
+    ])
+    let runtime = makeRuntime(hosts: ["a", "b", "c", "d"], screens: screens) {
+      $0.screen = .all
+    }
+    runtime.start()
+    // Both screens have room for 840,000 square points of sessions.
+    #expect(
+      terminal.calls.last
+        == .arrange([
+          WindowPlacement(window: 101, frame: Rect(x: 0, y: 25, width: 600, height: 700)),
+          WindowPlacement(window: 102, frame: Rect(x: 600, y: 25, width: 600, height: 700)),
+          WindowPlacement(window: 103, frame: Rect(x: 1200, y: -300, width: 600, height: 700)),
+          WindowPlacement(window: 104, frame: Rect(x: 1800, y: -300, width: 600, height: 700)),
+          WindowPlacement(window: 1, frame: Rect(x: 0, y: 725, width: 1200, height: 87)),
+        ]))
+  }
+
   @Test func editsTheTilingAreaWithTheController() throws {
     let runtime = makeRuntime()
     runtime.start()
@@ -233,7 +256,7 @@ final class RecordingNotifier: Notifier {
       ])
 
     runtime.handleInput(Data("j\u{1B}[1;5D\r".utf8))  // down, narrower, accept
-    #expect(runtime.tilingArea == Rect(x: 0, y: 35, width: 1190, height: 787))
+    #expect(runtime.tilingAreas == [Rect(x: 0, y: 35, width: 1190, height: 787)])
     #expect(
       terminal.calls.last
         == .arrange([

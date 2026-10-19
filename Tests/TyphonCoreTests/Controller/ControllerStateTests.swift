@@ -119,14 +119,24 @@ let esc = "\u{1B}"
 
   @Test func growsAndShrinksTheGrid() {
     var harness = Harness()  // 5 sessions: 3 columns automatically
-    #expect(harness.state.shape.columns == 3)
+    #expect(harness.state.tiling.grids[0].columns == 3)
     #expect(harness.type("\(ctrlA)g") == [.retile])
-    #expect(harness.state.shape.columns == 4)
+    #expect(harness.state.tiling.grids[0].columns == 4)
     harness.type("ggg")
-    #expect(harness.state.shape.columns == 5)
+    #expect(harness.state.tiling.grids[0].columns == 5)
     harness.type("GGGGGGG")
-    #expect(harness.state.shape.columns == 1)
+    #expect(harness.state.tiling.grids[0].columns == 1)
     #expect(harness.state.mode == .action)
+  }
+
+  @Test func growsAndShrinksEveryGrid() {
+    var harness = Harness(hosts: ["a", "b", "c", "d", "e", "f", "g"])
+    harness.state.tilingWeights = [1, 1]  // 4 and 3 sessions
+    #expect(harness.state.tiling.grids.map(\.columns) == [2, 3])
+    harness.type("\(ctrlA)g")
+    #expect(harness.state.tiling.grids.map(\.columns) == [4, 3])
+    harness.type("GGG")
+    #expect(harness.state.tiling.grids.map(\.columns) == [1, 1])
   }
 
   @Test func togglesAndReenablesAll() {

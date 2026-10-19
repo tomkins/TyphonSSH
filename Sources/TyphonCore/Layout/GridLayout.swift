@@ -89,51 +89,152 @@ public struct GridShape: Hashable, Sendable {
   }
 }
 
-/// Where each window goes: a `GridShape` placed in the tiling area, with the
-/// controller window running along the bottom.
+/// The session windows shared out between one grid per tiling area (usually
+/// one per screen), filling the first grid, then the next, and so on.
+public struct Tiling: Hashable, Sendable {
+  public let grids: [GridShape]
+
+  public init(grids: [GridShape]) {
+    self.grids = grids.isEmpty ? [GridShape(count: 0)] : grids
+  }
+
+  /// - Parameters:
+  ///   - count: Number of session windows.
+  ///   - weights: The relative size of each tiling area; windows are shared
+  ///     out in proportion, so they come out about the same size everywhere.
+  ///   - columns: A fixed column count for every grid; see `GridShape`.
+  ///   - rows: A fixed row count for every grid; see `GridShape`.
+  public init(count: Int, weights: [Double] = [1], columns: Int? = nil, rows: Int? = nil) {
+    self.init(
+      grids: Tiling.share(count, by: weights).map {
+        GridShape(count: $0, columns: columns, rows: rows)
+      })
+  }
+
+  /// Divides `count` in proportion to `weights` by the largest remainder
+  /// method, favouring earlier weights in a tie.
+  public static func share(_ count: Int, by weights: [Double]) -> [Int] {
+    let weights = weights.isEmpty ? [1] : weights.map { max($0, 0) }
+    let total = weights.reduce(0, +)
+    guard total > 0 else { return [count] + Array(repeating: 0, count: weights.count - 1) }
+    let exact = weights.map { Double(count) * $0 / total }
+    var shares = exact.map { Int($0.rounded(.down)) }
+    let remainders = exact.indices.sorted {
+      (exact[$0] - Double(shares[$0]), -$0) > (exact[$1] - Double(shares[$1]), -$1)
+    }
+    for index in remainders.prefix(count - shares.reduce(0, +)) { shares[index] += 1 }
+    return shares
+  }
+
+  public var count: Int { grids.reduce(0) { $0 + $1.count } }
+
+  /// The grid holding the window at `index`, and the window's index within that grid.
+  public func locate(_ index: Int) -> (grid: Int, index: Int)? {
+    guard index >= 0 else { return nil }
+    var first = 0
+    for (grid, shape) in grids.enumerated() {
+      if index < first + shape.count { return (grid, index - first) }
+      first += shape.count
+    }
+    return nil
+  }
+
+  private func firstIndex(ofGrid grid: Int) -> Int {
+    grids[..<grid].reduce(0) { $0 + $1.count }
+  }
+
+  /// Moves from `index` one step in `direction`. Up and down wrap within a
+  /// grid; left and right carry on into the neighbouring grid at the same row,
+  /// wrapping from the last grid to the first.
+  public func index(movingFrom index: Int, _ direction: Direction) -> Int {
+    guard let (grid, local) = locate(index) else { return index }
+    let filled = grids.indices.filter { grids[$0].count > 0 }
+    let shape = grids[grid]
+    let step: Int
+    switch direction {
+    case .left: step = -1
+    case .right: step = 1
+    case .up, .down: step = 0
+    }
+    var position = shape.position(of: local)
+    position.column += step
+    if step == 0 || filled.count == 1 || shape.index(at: position) != nil {
+      return firstIndex(ofGrid: grid) + shape.index(movingFrom: local, direction)
+    }
+    let here = filled.firstIndex(of: grid)!
+    let next = filled[(here + step + filled.count) % filled.count]
+    let target = grids[next]
+    let row = min(position.row, target.rows - 1)
+    let column = step > 0 ? 0 : min(target.columns, target.count - row * target.columns) - 1
+    return firstIndex(ofGrid: next) + target.index(at: GridPosition(column: column, row: row))!
+  }
+}
+
+/// Where each window goes: each grid of a `Tiling` placed in its own tiling
+/// area, with the controller window running along the bottom of the first.
 ///
 /// ```
-/// ┌────────┬────────┬────────┐
-/// │ 0      │ 1      │ 2      │
-/// ├────────┼────────┼────────┤
-/// │ 3      │ 4      │        │
-/// ├────────┴────────┴────────┤
-/// │ controller               │
-/// └──────────────────────────┘
+/// ┌────────┬────────┬────────┐  ┌────────┬────────┐
+/// │ 0      │ 1      │ 2      │  │ 5      │ 6      │
+/// ├────────┼────────┼────────┤  │        │        │
+/// │ 3      │ 4      │        │  ├────────┼────────┤
+/// ├────────┴────────┴────────┤  │ 7      │        │
+/// │ controller               │  │        │        │
+/// └──────────────────────────┘  └────────┴────────┘
 /// ```
 public struct GridLayout: Hashable, Sendable {
-  public let shape: GridShape
-  /// The whole tiling area, including the controller.
-  public let area: Rect
+  public let tiling: Tiling
+  /// The tiling area for each grid; the first includes the controller.
+  public let areas: [Rect]
   public let controllerHeight: Double
 
-  public init(shape: GridShape, area: Rect, controllerHeight: Double) {
-    self.shape = shape
-    self.area = area
+  public init(tiling: Tiling, areas: [Rect], controllerHeight: Double) {
+    self.tiling = tiling
+    self.areas = areas
     self.controllerHeight = controllerHeight
   }
 
-  public var cellWidth: Double { (area.width / Double(shape.columns)).rounded(.down) }
-  public var cellHeight: Double {
-    ((area.height - controllerHeight) / Double(shape.rows)).rounded(.down)
+  public init(shape: GridShape, area: Rect, controllerHeight: Double) {
+    self.init(tiling: Tiling(grids: [shape]), areas: [area], controllerHeight: controllerHeight)
+  }
+
+  /// The part of the `grid`th area that session windows are tiled into.
+  public func sessionArea(ofGrid grid: Int) -> Rect {
+    guard areas.indices.contains(grid) else { return zoomedFrame }
+    var area = areas[grid]
+    if grid == 0 { area.height -= controllerHeight }
+    return area
   }
 
   public func frame(forWindowAt index: Int) -> Rect {
-    let position = shape.position(of: index)
+    guard let (grid, local) = tiling.locate(index), tiling.grids.indices.contains(grid) else {
+      return zoomedFrame
+    }
+    let shape = tiling.grids[grid]
+    let area = sessionArea(ofGrid: grid)
+    let width = (area.width / Double(shape.columns)).rounded(.down)
+    let height = (area.height / Double(shape.rows)).rounded(.down)
+    let position = shape.position(of: local)
     return Rect(
-      x: area.x + Double(position.column) * cellWidth,
-      y: area.y + Double(position.row) * cellHeight,
-      width: cellWidth,
-      height: cellHeight
+      x: area.x + Double(position.column) * width,
+      y: area.y + Double(position.row) * height,
+      width: width,
+      height: height
     )
   }
 
+  private var controllerArea: Rect { areas.first ?? Rect(x: 0, y: 0, width: 0, height: 0) }
+
   public var controllerFrame: Rect {
-    Rect(x: area.x, y: area.maxY - controllerHeight, width: area.width, height: controllerHeight)
+    Rect(
+      x: controllerArea.x, y: controllerArea.maxY - controllerHeight,
+      width: controllerArea.width, height: controllerHeight)
   }
 
   /// The frame for a single window filling everything above the controller.
   public var zoomedFrame: Rect {
-    Rect(x: area.x, y: area.y, width: area.width, height: area.height - controllerHeight)
+    Rect(
+      x: controllerArea.x, y: controllerArea.y,
+      width: controllerArea.width, height: controllerArea.height - controllerHeight)
   }
 }

@@ -48,14 +48,27 @@ import TyphonCore
 @Suite struct ScreenSelectionTests {
   @Test func parses() {
     #expect(ScreenSelection("2") == .single(2))
-    #expect(ScreenSelection("1-2") == .span(1, 2))
+    #expect(ScreenSelection("1-3") == .screens([1, 2, 3]))
+    #expect(ScreenSelection("3-2") == .screens([3, 2]))
+    #expect(ScreenSelection("2,1") == .screens([2, 1]))
+    #expect(ScreenSelection("4,1-2") == .screens([4, 1, 2]))
+    #expect(ScreenSelection("all") == .all)
     #expect(ScreenSelection("0") == nil)
     #expect(ScreenSelection("1-2-3") == nil)
+    #expect(ScreenSelection("1,") == nil)
+    #expect(ScreenSelection("1,1-2") == nil)
     #expect(ScreenSelection("one") == nil)
+  }
+
+  @Test func roundTrips() throws {
+    let selections: [ScreenSelection] = [.single(2), .screens([1, 3]), .all]
+    let encoded = try JSONEncoder().encode(selections)
+    #expect(String(decoding: encoded, as: UTF8.self) == #"[2,"1,3","all"]"#)
+    #expect(try JSONDecoder().decode([ScreenSelection].self, from: encoded) == selections)
   }
 
   @Test func decodesNumbersAndStrings() throws {
     let decoded = try JSONDecoder().decode([ScreenSelection].self, from: Data(#"[2, "1-2"]"#.utf8))
-    #expect(decoded == [.single(2), .span(1, 2)])
+    #expect(decoded == [.single(2), .screens([1, 2])])
   }
 }

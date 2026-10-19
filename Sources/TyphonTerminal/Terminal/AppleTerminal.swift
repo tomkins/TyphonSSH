@@ -6,17 +6,21 @@ import TyphonCore
 @MainActor
 public struct AppleTerminal: TerminalApp {
   private let runner: any AppleScriptRunner
+  private let mover: any WindowMover
   private let waitForModifierRelease: @MainActor () -> Void
 
   /// - Parameters:
   ///   - waitForModifierRelease: Called before synthesising key presses, so that
   ///     keys still held from the triggering command (Ctrl, Shift) don't combine
   ///     with them.
+  ///   - mover: Places windows; any it can't are placed with AppleScript instead.
   public init(
     runner: any AppleScriptRunner = NSAppleScriptRunner(),
+    mover: any WindowMover = AccessibilityWindowMover(),
     waitForModifierRelease: @escaping @MainActor () -> Void = AppleTerminal.waitForModifierRelease
   ) {
     self.runner = runner
+    self.mover = mover
     self.waitForModifierRelease = waitForModifierRelease
   }
 
@@ -39,7 +43,8 @@ public struct AppleTerminal: TerminalApp {
 
   public func arrange(_ placements: [WindowPlacement]) throws {
     guard !placements.isEmpty else { return }
-    try runner.run(TerminalScript.arrange(placements))
+    try runner.run(TerminalScript.arrange(placements.map(\.window)))
+    try place(placements)
   }
 
   public func frame(of window: TerminalWindowID) throws -> Rect {
@@ -53,7 +58,13 @@ public struct AppleTerminal: TerminalApp {
   }
 
   public func setFrame(_ frame: Rect, of window: TerminalWindowID) throws {
-    try runner.run(TerminalScript.setFrame(frame, of: window))
+    try place([WindowPlacement(window: window, frame: frame)])
+  }
+
+  private func place(_ placements: [WindowPlacement]) throws {
+    let unplaced = mover.place(placements)
+    guard !unplaced.isEmpty else { return }
+    try runner.run(TerminalScript.setFrames(unplaced))
   }
 
   public func colors(of windows: [TerminalWindowID]) throws -> [TerminalWindowID: ColorPair] {

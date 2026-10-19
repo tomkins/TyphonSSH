@@ -18,7 +18,11 @@ struct LaunchOptions: ParsableArguments {
     name: [.customShort("y"), .long], help: "Number of grid rows (ignored if --columns is given).")
   var rows: Int?
 
-  @Option(help: "Screen to tile on, numbered from 1, or a span such as 1-2.")
+  @Option(
+    help: """
+      Screen to tile on, numbered from 1. Name several, such as 1-3, 2,1 or all, \
+      to tile each of them.
+      """)
   var screen: ScreenSelection?
 
   @Option(help: "The ssh command to run.")

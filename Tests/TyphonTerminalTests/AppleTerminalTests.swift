@@ -16,10 +16,25 @@ final class RecordingRunner: AppleScriptRunner {
   }
 }
 
+/// Places the windows it knows, recording what it placed.
+@MainActor
+final class RecordingMover: WindowMover {
+  var known: Set<TerminalWindowID> = [1, 2]
+  var placed: [WindowPlacement] = []
+
+  func place(_ placements: [WindowPlacement]) -> [WindowPlacement] {
+    placed += placements.filter { known.contains($0.window) }
+    return placements.filter { !known.contains($0.window) }
+  }
+}
+
 @MainActor
 @Suite struct AppleTerminalTests {
   let runner = RecordingRunner()
-  var terminal: AppleTerminal { AppleTerminal(runner: runner, waitForModifierRelease: {}) }
+  let mover = RecordingMover()
+  var terminal: AppleTerminal {
+    AppleTerminal(runner: runner, mover: mover, waitForModifierRelease: {})
+  }
 
   @Test func opensWindowsAndReturnsTheirIDs() throws {
     // `tab 1 of window id 4711`
@@ -44,14 +59,27 @@ final class RecordingRunner: AppleScriptRunner {
     }
   }
 
-  @Test func arrangesWindowsInOneScript() throws {
-    try terminal.arrange([
+  @Test func showsWindowsInOneScriptThenPlacesThem() throws {
+    let placements = [
       WindowPlacement(window: 1, frame: Rect(x: 0, y: 25, width: 400, height: 300)),
       WindowPlacement(window: 2, frame: Rect(x: 400, y: 25, width: 400, height: 300)),
-    ])
+    ]
+    try terminal.arrange(placements)
     #expect(runner.scripts.count == 1)
-    #expect(runner.scripts[0].contains("set bounds of w to {0, 25, 400, 325}"))
-    #expect(runner.scripts[0].contains("set bounds of w to {400, 25, 800, 325}"))
+    #expect(runner.scripts[0].contains("set visible of w to true"))
+    #expect(!runner.scripts[0].contains("bounds"))
+    #expect(mover.placed == placements)
+  }
+
+  @Test func fallsBackToAppleScriptForWindowsItCantPlace() throws {
+    try terminal.setFrame(Rect(x: 0, y: 25, width: 400, height: 300), of: 3)
+    #expect(
+      runner.scripts == [
+        TerminalScript.setFrames([
+          WindowPlacement(window: 3, frame: Rect(x: 0, y: 25, width: 400, height: 300))
+        ])
+      ])
+    #expect(runner.scripts[0].contains("set bounds of window id 3 to {0, 25, 400, 325}"))
   }
 
   @Test func skipsScriptsWithNothingToDo() throws {
@@ -108,11 +136,11 @@ final class RecordingRunner: AppleScriptRunner {
   @Test(arguments: [
     TerminalScript.openWindow(running: "echo \"hi\" \\ there"),
     TerminalScript.windowID(forTTY: "/dev/ttys001"),
-    TerminalScript.arrange([
+    TerminalScript.arrange([1, 2]),
+    TerminalScript.frame(of: 1),
+    TerminalScript.setFrames([
       WindowPlacement(window: 1, frame: Rect(x: 0, y: 0, width: 10, height: 10))
     ]),
-    TerminalScript.frame(of: 1),
-    TerminalScript.setFrame(Rect(x: 0, y: 0, width: 10, height: 10), of: 1),
     TerminalScript.colors(of: [1, 2]),
     TerminalScript.setColors([1: ColorPair(foreground: .white, background: .white), 2: ColorPair()]
     ),

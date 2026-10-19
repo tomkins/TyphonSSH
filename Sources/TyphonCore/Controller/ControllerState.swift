@@ -11,6 +11,8 @@ public struct ControllerState: Sendable {
   public private(set) var mode: ControllerMode = .input
   /// Grid columns chosen with g/G, overriding the configuration.
   public private(set) var columns: Int?
+  /// The relative size of each tiling area; see `Tiling`.
+  public var tilingWeights: [Double] = [1]
   public private(set) var zoomedSession: SessionID?
   /// A one-off message shown beneath the prompt until the next key press.
   public private(set) var status: String?
@@ -29,8 +31,9 @@ public struct ControllerState: Sendable {
 
   // MARK: - Derived state
 
-  public var shape: GridShape {
-    GridShape(count: roster.count, columns: columns, rows: configuration.tileRows)
+  public var tiling: Tiling {
+    Tiling(
+      count: roster.count, weights: tilingWeights, columns: columns, rows: configuration.tileRows)
   }
 
   public var prompt: [String] {
@@ -53,6 +56,10 @@ public struct ControllerState: Sendable {
     guard case .select(let index) = mode else { return nil }
     let ordered = roster.ordered
     return ordered.indices.contains(index) ? ordered[index] : nil
+  }
+
+  private var widestGrid: Int {
+    tiling.grids.map(\.columns).max() ?? 1
   }
 
   private var canEnableNext: Bool {
@@ -178,10 +185,10 @@ public struct ControllerState: Sendable {
     case .character("s"):
       mode = .sendText
     case .character("g"):
-      columns = min(shape.columns + 1, max(roster.count, 1))
+      columns = min(widestGrid + 1, max(roster.count, 1))
       retile(effects: &effects)
     case .character("G"):
-      columns = max(shape.columns - 1, 1)
+      columns = max(widestGrid - 1, 1)
       retile(effects: &effects)
     case .character("p"):
       effects.append(.shortcut(.splitPane, sessions: sessions, includingController: false))
@@ -231,7 +238,7 @@ public struct ControllerState: Sendable {
 
     switch key.withVimArrows {
     case .arrow(let direction, _):
-      mode = .select(index: shape.index(movingFrom: index, direction))
+      mode = .select(index: tiling.index(movingFrom: index, direction))
     case .escape, .enter:
       mode = .input
     case .character("e"):

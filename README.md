@@ -64,7 +64,7 @@ web[1-3]        tail -f /var/log/nginx/access.log
 username@db1:2222   top
 ```
 
-Run `tyssh --help` for all options, such as `--login`, `--columns`, `--screen 1-2`, `--ssh-args` and `--sort-hosts`.
+Run `tyssh --help` for all options, such as `--login`, `--columns`, `--screen all`, `--ssh-args` and `--sort-hosts`.
 
 ## The controller
 
@@ -92,7 +92,7 @@ What you type in the controller goes to every enabled session. Press **Ctrl-A** 
 
 **Selecting windows (`e`):** move with the arrow keys or `h` `j` `k` `l`. Then press `e`nable, `d`isable or `t`oggle to change the selected window, `o` to disable all the others, or `O` to disable the others and zoom the selected one. Press `Esc` when finished.
 
-**Tiling area (`b`):** the controller expands to cover the current tiling area. Drag and resize it with the mouse, or move it with the arrows or `h` `j` `k` `l` (hold Ctrl to resize). `Enter` accepts the new area and `Esc` cancels. `r` resets to the configured area and `f` fills the screen. `p` prints the area in a form you can paste into your configuration.
+**Tiling area (`b`):** the controller expands to cover the current tiling area. Drag and resize it with the mouse, or move it with the arrows or `h` `j` `k` `l` (hold Ctrl to resize). `Enter` accepts the new area and `Esc` cancels. `r` resets to the configured area and `f` fills the screen. When tiling several screens, this adjusts the area on the controller's screen. `p` prints the area in a form you can paste into your configuration.
 
 ## Configuration
 
@@ -133,6 +133,7 @@ Settings are read from `~/.config/tyssh/config.json` (or `$XDG_CONFIG_HOME/tyssh
 }
 ```
 
+- **`screen`** picks the display to tile on, numbered from 1 with the main display (the one with the menu bar) first. It defaults to the main display. To spread windows over several displays, name them as a range (`"1-3"`), a list (`"2,1"`) or `"all"`. Each display is tiled separately, so no window straddles two, and the windows are shared out in proportion to each display's size. The controller sits on the first display named. `screenBounds` replaces all of this with one fixed area.
 - **Colours** are written either as `#RRGGBB` or as Terminal's 16-bit `{r,g,b}`. A colour pair you set replaces the default pair entirely, so leaving a side out means that side isn't recoloured.
 - **`ssh`** can name a wrapper such as `mosh`. It runs as `<ssh> <sshArguments> [-l user] [-p port] -- host [command]`, so a wrapper must accept `--` before the host. Hosts starting with `-` are rejected, so a hosts file can't slip options into ssh.
 - **Profiles** are Terminal "settings sets". A session profile with a visual bell avoids a chorus of beeps.

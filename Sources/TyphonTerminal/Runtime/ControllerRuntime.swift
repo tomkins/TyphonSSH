@@ -51,10 +51,15 @@ public final class ControllerRuntime {
   private var controllerWindow: TerminalWindowID?
   private var controllerColors = ColorPair()
   private var originalColors: [SessionID: ColorPair] = [:]
-  /// Where sessions are tiled; changed interactively in bounds mode.
-  public private(set) var tilingArea = Rect(x: 0, y: 0, width: 1024, height: 768)
+  /// Where sessions are tiled, one area per screen. The first, which holds the
+  /// controller, can be changed interactively in bounds mode.
+  public private(set) var tilingAreas = [Rect(x: 0, y: 0, width: 1024, height: 768)] {
+    didSet { updateTilingWeights() }
+  }
   /// The configured controller height, or more if Terminal won't make the window that short.
-  private var controllerHeight: Double
+  private var controllerHeight: Double {
+    didSet { updateTilingWeights() }
+  }
   private var tilingAreaBeforeEditing: Rect?
 
   private var shownPrompt: [String] = []
@@ -100,7 +105,7 @@ public final class ControllerRuntime {
   public func start() {
     environment.output.clearAll()
     do {
-      tilingArea = try TilingArea.resolve(
+      tilingAreas = try TilingArea.resolve(
         for: configuration, screens: environment.screens.visibleFrames())
     } catch {
       state.show(status: "\(error)")
@@ -308,7 +313,14 @@ public final class ControllerRuntime {
   }
 
   private var currentLayout: GridLayout {
-    GridLayout(shape: state.shape, area: tilingArea, controllerHeight: controllerHeight)
+    GridLayout(tiling: state.tiling, areas: tilingAreas, controllerHeight: controllerHeight)
+  }
+
+  /// Shares the sessions between the tiling areas by the room each has for them.
+  private func updateTilingWeights() {
+    state.tilingWeights = tilingAreas.enumerated().map { index, area in
+      area.width * max(area.height - (index == 0 ? controllerHeight : 0), 0)
+    }
   }
 
   private func retile() throws {
@@ -375,10 +387,10 @@ public final class ControllerRuntime {
     let step = ControllerState.boundsStep
     switch command {
     case .begin:
-      tilingAreaBeforeEditing = tilingArea
+      tilingAreaBeforeEditing = tilingAreas[0]
       try terminal.hide(sessionWindows)
       try terminal.setColors(configuration.colors.bounds, of: controllerWindow)
-      try terminal.arrange([WindowPlacement(window: controllerWindow, frame: tilingArea)])
+      try terminal.arrange([WindowPlacement(window: controllerWindow, frame: tilingAreas[0])])
     case .move(let direction):
       let (dx, dy) = direction.offset
       try terminal.setFrame(
@@ -391,19 +403,19 @@ public final class ControllerRuntime {
         of: controllerWindow
       )
     case .accept:
-      tilingArea = try terminal.frame(of: controllerWindow)
+      tilingAreas[0] = try terminal.frame(of: controllerWindow)
       try terminal.setColors(controllerColors, of: controllerWindow)
     case .cancel:
-      tilingArea = tilingAreaBeforeEditing ?? tilingArea
+      tilingAreas[0] = tilingAreaBeforeEditing ?? tilingAreas[0]
       try terminal.setColors(controllerColors, of: controllerWindow)
     case .reset:
       try terminal.setFrame(
-        TilingArea.resolve(for: configuration, screens: environment.screens.visibleFrames()),
+        TilingArea.resolve(for: configuration, screens: environment.screens.visibleFrames())[0],
         of: controllerWindow
       )
     case .fillScreen:
       try terminal.setFrame(
-        TilingArea.resolve(configuration.screen, screens: environment.screens.visibleFrames()),
+        TilingArea.resolve(configuration.screen, screens: environment.screens.visibleFrames())[0],
         of: controllerWindow
       )
     case .print:
